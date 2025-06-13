@@ -1,4 +1,5 @@
 import pandas as pd
+from collections import defaultdict
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
@@ -6,17 +7,13 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
 from bs4 import BeautifulSoup
-from app.scraper.config import EXCEL_PATH
+from app.scraper.config import EXCEL_PATH, STUDENT_KEYWORDS
 
 class InternScraper:
     def __init__(self):
+        self.job_titles = []
+        self.master_intern_dict = defaultdict(list)
         self.load_excel_data()
-        self.get_all_jobs()
-
-        self.career_urls = []
-        self.job_classes = []
-
-        self.master_intern_dict = {}
     
     def load_excel_data(self):
         urls_df = pd.read_excel(EXCEL_PATH)
@@ -50,19 +47,27 @@ class InternScraper:
             job_listings = soup.find_all(class_=job_class)
 
             # temporary debug output
-            job_titles = [job.text.strip().lower() for job in job_listings]
+            self.job_titles = [job.text.strip().lower() for job in job_listings]
             with open('debug_output.txt', 'w', encoding='utf-8') as f:
-                for title in job_titles:
+                for title in self.job_titles:
                     f.write(f"{title}\n")
-            print(f"Found {len(job_titles)} job listings on {career_url} with class '{job_class}'")
+            print(f"Found {len(self.job_titles)} job listings on {career_url} with class '{job_class}'")
 
         finally:
             driver.quit()
     
+    def search_student_jobs(self, job_titles, company):
+        for title in job_titles:
+            for keyword in STUDENT_KEYWORDS:
+                if keyword in title.lower():
+                    self.master_intern_dict[company].append(title)
+                    break
+    
     def print_test(self):
-        self.load_excel_data()
         print(f"Testing URL: {self.career_urls[0]} with job class: {self.job_classes[0]}")
         self.get_all_jobs(self.career_urls[0], self.job_classes[0])
+        self.search_student_jobs(self.job_titles, self.companies[0])
+        print(f"Master Intern Dictionary: {self.master_intern_dict}")
 
 
 
