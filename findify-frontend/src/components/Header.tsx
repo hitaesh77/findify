@@ -18,7 +18,7 @@ export default function Header() {
   const pathname = usePathname()
 
   return (
-    <header className="bg-white shadow-md">
+    <header className="bg-white shadow-md border-b-2">
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-800">Findify</h1>
         <nav className="space-x-4 flex flex-1 justify-center">

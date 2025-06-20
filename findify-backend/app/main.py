@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.api.routes import router
-import requests
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 app.include_router(router)
@@ -11,5 +11,10 @@ def read_root():
 
 print("FastAPI app initialized and running...")
 
-# print("TESTING:")
-# print(print(requests.get("http://127.0.0.1:8000/").json()))
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Or specify your frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
