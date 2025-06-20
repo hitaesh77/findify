@@ -1,5 +1,5 @@
 # Findify
-The intelligent internship hunter that never sleeps.\
+The intelligent internship hunter that never sleeps.
 
 Findify is an automated web scraper and dashboard system that continuously monitors your target companies for new internship opportunities. Set it, forget it, and let Findify do the heavy lifting while you focus on perfecting your applications.
 
