@@ -18,10 +18,14 @@ from app.scraper.utils import is_valid_url, print_intern_dict, test_company_stud
 
 class InternScraper:
     def __init__(self):
-        # self.job_titles = []
-        # self.master_intern_dict = defaultdict(list)
         self.db = SessionLocal()
         self.load_excel_data()
+
+    # Destructor to ensure database connection is closed
+    def __del__(self):
+        if hasattr(self, 'db'):
+            self.db.close()
+            print("Database connection closed")
     
     def load_excel_data(self):
         urls_df = pd.read_excel(EXCEL_PATH)
@@ -80,7 +84,6 @@ class InternScraper:
         return job_titles
     
     def search_student_jobs(self, job_titles, company):
-        # self.master_intern_dict[company] = []
         print(f"Searching for student jobs at {company.company_name}...")
         for title in job_titles:
             for keyword in STUDENT_KEYWORDS:
@@ -121,5 +124,3 @@ class InternScraper:
 if __name__ == "__main__":
     scraper = InternScraper()
     scraper.scrape_internships()
-    # print_intern_dict(scraper.master_intern_dict)
-    # test_company_student_jobs("Datadog", scraper.master_intern_dict)
