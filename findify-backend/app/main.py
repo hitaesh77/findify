@@ -5,12 +5,6 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 app.include_router(router)
 
-@app.get("/")
-def read_root():
-    return {"message": "Findify API is live!"}
-
-print("FastAPI app initialized and running...")
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Or specify your frontend URL
@@ -18,3 +12,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/")
+def read_root():
+    return {"message": "Findify API is live!"}
+
+print("FastAPI app initialized and running...")

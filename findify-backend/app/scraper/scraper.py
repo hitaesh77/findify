@@ -14,7 +14,7 @@ from app.db.database import SessionLocal
 from bs4 import BeautifulSoup
 
 from app.scraper.config import EXCEL_PATH, STUDENT_KEYWORDS
-from app.scraper.utils import is_valid_url, print_intern_dict, test_company_student_jobs
+from app.scraper.utils import is_valid_url, print_intern_dict, test_company_student_jobs, to_css_selector
 
 class InternScraper:
     def __init__(self):
@@ -63,7 +63,7 @@ class InternScraper:
                 # Navigate to the career page and wait for the job listings to load
                 driver.get(company.career_url)
                 try:
-                    wait.until(EC.presence_of_element_located((By.CLASS_NAME, company.job_class)))
+                    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, to_css_selector(company.job_class))))
                 except TimeoutException:
                     print(f"Timeout waiting for elements with class '{company.job_class}' to load")
                 

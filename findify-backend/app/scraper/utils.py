@@ -1,4 +1,5 @@
 from urllib.parse import urlparse
+import re
 
 # helper functions
 def is_valid_url(url):
@@ -16,3 +17,14 @@ def test_company_student_jobs(company, intern_dict):
         print(f"{company}:", ", ".join(intern_dict[company]) if intern_dict[company] else "No student jobs found.")
     else:
         print(f"{company} not found in the dictionary.")
+
+def escape_css_class(cls: str) -> str:
+    # Escape colon and other special characters per CSS spec
+    return re.sub(r'([!"#$%&\'()*+,.\/:;<=>?@\[\\\]^`{|}~])', r'\\\1', cls)
+
+def to_css_selector(class_str: str) -> str:
+    class_str = class_str.strip()
+    if not class_str:
+        raise ValueError("Empty class name received")
+    classes = class_str.split()
+    return '.' + '.'.join(escape_css_class(cls) for cls in classes)
