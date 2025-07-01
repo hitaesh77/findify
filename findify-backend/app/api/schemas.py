@@ -21,3 +21,12 @@ class CompanyIn(BaseModel):
         orm_mode = True
         from_attributes = True
 
+class InternshipOut(BaseModel):
+    internship_id: int
+    company_name: str
+    internship_role: str
+    date_found: str
+
+    class Config:
+        from_attributes = True
+

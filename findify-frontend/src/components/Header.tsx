@@ -10,8 +10,8 @@ const tabs = [
   { name: 'Dashboard', href: '/dashboard' },
   { name: 'Run', href: '/run' },
   { name: 'Companies', href: '/companies' },
+  { name: 'Internships', href: '/internships' },
   { name: 'Notifications', href: '/notifications' },
-  { name: 'Logs', href: '/logs' },
 ]
 
 export default function Header() {

@@ -9,17 +9,18 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Card, CardContent} from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogClose } 
+  DialogClose
+}
   from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
@@ -70,7 +71,7 @@ export default function CompaniesPage() {
         const newCompany = await response.json()
         // Add the new company to the list
         setCompanies(prev => [...prev, newCompany])
-        
+
         // Reset form and close dialog
         setFormData({
           company_name: '',
@@ -106,119 +107,119 @@ export default function CompaniesPage() {
           <p className="text-gray-600">Manage tracked companies and career pages</p>
         </div>
 
-          <Dialog open={open} onOpenChange={setOpen}>
-            {/* <div className="flex items-center justify-center min-h-screen bg-gray-50 p-8"> */}
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Company
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl w-full">
-              <form onSubmit={handleSubmit}>
-                  <DialogHeader>
-                    <DialogTitle>New Company</DialogTitle>
-                    <DialogDescription>
-                      Add a new company to scrape
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-3 mt-3">
-                    <Label htmlFor="company_name">Company Name</Label>
-                    <Input 
-                      placeholder="Company Name"
-                      id="company_name"
-                      value={formData.company_name}
-                      onChange={(e) => handleInputChange('company_name', e.target.value)}
-                      required 
-                    />
-                  </div>
-                  <div className="grid gap-3 mt-3">
-                    <Label>Career Url</Label>
-                    <Input 
-                      placeholder="https://company.com/careers"
-                      id="career_url"
-                      value={formData.career_url}
-                      onChange={(e) => handleInputChange('career_url', e.target.value)}
-                      required 
-                    />
-                  </div>
-                  <div className="grid gap-3 mt-3">
-                    <Label>Job Class</Label>
-                    <Input 
-                      placeholder="hrt-card-title"
-                      id="job_class"
-                      value={formData.job_class}
-                      onChange={(e) => handleInputChange('job_class', e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="grid gap-3 mt-3">
-                    <Label>Location Class</Label>
-                    <Input 
-                      placeholder="job-location-name"
-                      id="location_class"
-                      value={formData.location_class}
-                      onChange={(e) => handleInputChange('location_class', e.target.value)}
-                      required
-                    />
-                  </div>
-                  <DialogFooter className="mt-3">
-                    <DialogClose asChild>
-                      <Button variant="outline" type="button">
-                        Cancel
-                      </Button>
-                    </DialogClose>
-                    <Button type="submit" disabled={loading}>
-                      {loading ? 'Saving...' : 'Save Company'}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-          </Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
+          {/* <div className="flex items-center justify-center min-h-screen bg-gray-50 p-8"> */}
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Company
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl w-full">
+            <form onSubmit={handleSubmit}>
+              <DialogHeader>
+                <DialogTitle>New Company</DialogTitle>
+                <DialogDescription>
+                  Add a new company to scrape
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-3 mt-3">
+                <Label htmlFor="company_name">Company Name</Label>
+                <Input
+                  placeholder="Company Name"
+                  id="company_name"
+                  value={formData.company_name}
+                  onChange={(e) => handleInputChange('company_name', e.target.value)}
+                  required
+                />
+              </div>
+              <div className="grid gap-3 mt-3">
+                <Label>Career Url</Label>
+                <Input
+                  placeholder="https://company.com/careers"
+                  id="career_url"
+                  value={formData.career_url}
+                  onChange={(e) => handleInputChange('career_url', e.target.value)}
+                  required
+                />
+              </div>
+              <div className="grid gap-3 mt-3">
+                <Label>Job Class</Label>
+                <Input
+                  placeholder="hrt-card-title"
+                  id="job_class"
+                  value={formData.job_class}
+                  onChange={(e) => handleInputChange('job_class', e.target.value)}
+                  required
+                />
+              </div>
+              <div className="grid gap-3 mt-3">
+                <Label>Location Class</Label>
+                <Input
+                  placeholder="job-location-name"
+                  id="location_class"
+                  value={formData.location_class}
+                  onChange={(e) => handleInputChange('location_class', e.target.value)}
+                  required
+                />
+              </div>
+              <DialogFooter className="mt-3">
+                <DialogClose asChild>
+                  <Button variant="outline" type="button">
+                    Cancel
+                  </Button>
+                </DialogClose>
+                <Button type="submit" disabled={loading}>
+                  {loading ? 'Saving...' : 'Save Company'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
-      
-        <Card>
-            <CardContent className="p-0">
-                <Table>
-                <TableHeader>
-                    <TableRow>
-                    <TableHead className="font-semibold text-gray-900">Company</TableHead>
-                    <TableHead className="font-semibold text-gray-900">Career Page URL</TableHead>
-                    <TableHead className="font-semibold text-gray-900">Status</TableHead>
-                    <TableHead className="font-semibold text-gray-900">Job Class</TableHead>
-                    <TableHead className="font-semibold text-gray-900">Actions</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {companies.map((company) => (
-                    <TableRow key={company.id}>
-                        <TableCell className="font-medium text-gray-900">{company.company_name}</TableCell>
-                        <TableCell className="font-mono text-sm text-gray-600">
-                            {company.career_url}
-                        </TableCell>
-                        <TableCell>
-                            <Badge variant="default">Active</Badge>
-                        </TableCell>
-                        <TableCell className="text-gray-700">{company.job_class}</TableCell>
-                        <TableCell>
-                        <div className="flex gap-2">
-                            <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                            <Play className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                            <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </div>
-                        </TableCell>
-                    </TableRow>
-                    ))}
-                </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
+
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="font-semibold text-gray-900">Company</TableHead>
+                <TableHead className="font-semibold text-gray-900">Career Page URL</TableHead>
+                <TableHead className="font-semibold text-gray-900">Status</TableHead>
+                <TableHead className="font-semibold text-gray-900">Job Class</TableHead>
+                <TableHead className="font-semibold text-gray-900">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {companies.map((company) => (
+                <TableRow key={company.id ?? company.company_name}>
+                  <TableCell className="font-medium text-gray-900">{company.company_name}</TableCell>
+                  <TableCell className="font-mono text-sm text-gray-600">
+                    {company.career_url}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="default">Active</Badge>
+                  </TableCell>
+                  <TableCell className="text-gray-700">{company.job_class}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="sm">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm">
+                        <Play className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   )
 }
