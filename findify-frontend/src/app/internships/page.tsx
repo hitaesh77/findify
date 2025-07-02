@@ -25,55 +25,41 @@ import { Search, Briefcase, BookmarkCheck, Bookmark, ExternalLink, Filter } from
 type Internship = {
   id: number
   company: string
-  title: string
-  location: string
-  type: string
-  status: string
+  role: string
   saved: boolean
-  url: string
   dateFound: string // ISO string
 }
 
 export default function InternshipsPage() {
   const [internshipsList, setInternshipsList] = useState<Internship[]>([])
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
+  // const [searchQuery, setSearchQuery] = useState("")
+  // const [statusFilter, setStatusFilter] = useState("all")
   const [companyFilter, setCompanyFilter] = useState("all")
-  const [typeFilter, setTypeFilter] = useState("all")
+  // const [typeFilter, setTypeFilter] = useState("all")
 
   // Example: Fetch internships from API (replace with your endpoint)
   useEffect(() => {
     fetch('http://localhost:8000/internships')
       .then((res) => res.json())
-      .then((data) => {
-        // If the response is an array
-        if (Array.isArray(data)) {
-          setInternshipsList(data)
-        }
-        // If the response is an object with an internships array
-        else if (Array.isArray(data.internships)) {
-          setInternshipsList(data.internships)
-        }
-        // Fallback to empty array
-        else {
-          setInternshipsList([])
-        }
+      .then((data) => { 
+        setInternshipsList(
+          data.map((item: any) => ({
+            id: item.internship_id,
+            company: item.company_name,
+            role: item.internship_role,
+            saved: false,
+            dateFound: item.date_found
+          }))
+        ) 
       })
-      .catch((error) => {
-      })
+      .catch((error) => {})
   }, [])
 
   // Filtering logic
   const filteredInternships = internshipsList.filter((internship) => {
-    const matchesSearch =
-      internship.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      internship.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      internship.location.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStatus = statusFilter === "all" || internship.status === statusFilter
     const matchesCompany = companyFilter === "all" || internship.company === companyFilter
-    const matchesType = typeFilter === "all" || internship.type === typeFilter
 
-    return matchesSearch && matchesStatus && matchesCompany && matchesType
+    return matchesCompany
   })
 
   // Handlers for status and save
@@ -105,7 +91,7 @@ export default function InternshipsPage() {
 
       {/* Filters */}
       <Card className="border border-gray-200">
-        <CardContent className="p-6">
+        {/* <CardContent className="p-2">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -113,7 +99,7 @@ export default function InternshipsPage() {
                 placeholder="Search internships..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 outline"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -157,7 +143,7 @@ export default function InternshipsPage() {
               More Filters
             </Button>
           </div>
-        </CardContent>
+        </CardContent> */}
       </Card>
 
       {/* Internships Table */}
@@ -168,7 +154,6 @@ export default function InternshipsPage() {
               <TableRow className="border-gray-200">
                 <TableHead className="font-semibold text-gray-900">Company</TableHead>
                 <TableHead className="font-semibold text-gray-900">Position</TableHead>
-                <TableHead className="font-semibold text-gray-900">Status</TableHead>
                 <TableHead className="font-semibold text-gray-900">Found</TableHead>
                 <TableHead className="font-semibold text-gray-900">Actions</TableHead>
               </TableRow>
@@ -177,27 +162,7 @@ export default function InternshipsPage() {
               {filteredInternships.map((internship) => (
                 <TableRow key={internship.id} className="border-gray-200">
                   <TableCell className="font-medium text-gray-900">{internship.company}</TableCell>
-                  <TableCell className="text-gray-900">{internship.title}</TableCell>
-                  <TableCell className="text-gray-600">{internship.location}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">{internship.type}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={internship.status}
-                      onValueChange={(value) => updateInternshipStatus(internship.id, value)}
-                    >
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="New">New</SelectItem>
-                        <SelectItem value="Applied">Applied</SelectItem>
-                        <SelectItem value="Interview">Interview</SelectItem>
-                        <SelectItem value="Rejected">Rejected</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
+                  <TableCell className="text-gray-900">{internship.role}</TableCell>
                   <TableCell className="text-gray-600 text-sm">
                     {new Date(internship.dateFound).toLocaleDateString()}
                   </TableCell>
@@ -210,9 +175,6 @@ export default function InternshipsPage() {
                         className={internship.saved ? "text-blue-600" : "text-gray-400"}
                       >
                         {internship.saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => window.open(internship.url, "_blank")}>
-                        <ExternalLink className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>
