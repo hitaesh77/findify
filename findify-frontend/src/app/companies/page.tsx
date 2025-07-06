@@ -54,6 +54,29 @@ export default function CompaniesPage() {
     }))
   }
 
+  const handleDeleteCompany = async (companyId: number) => {
+    console.log(companies)
+    setLoading(true)
+    try {
+      const response = await fetch(`http://localhost:8000/companies/${companyId}`, {
+        method: 'DELETE',
+      })
+      if (response.ok) {
+        setCompanies(prev => prev.filter(c => c.id !== companyId))
+      } else {
+        console.error('Failed to delete company')
+      }
+    } catch (error) {
+      console.error('Error deleting company:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleUpdateCompany = async () => {
+    
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -70,7 +93,13 @@ export default function CompaniesPage() {
       if (response.ok) {
         const newCompany = await response.json()
         // Add the new company to the list
-        setCompanies(prev => [...prev, newCompany])
+        setCompanies(prev => [
+          ...prev,
+          {
+            ...newCompany,
+            id: newCompany.company_id,
+          },
+        ])
 
         // Reset form and close dialog
         setFormData({
@@ -91,11 +120,19 @@ export default function CompaniesPage() {
     }
   }
 
-
   useEffect(() => {
     fetch('http://localhost:8000/companies')
       .then((res) => res.json())
-      .then((data) => setCompanies(data))
+      .then((data) =>
+        setCompanies(
+          data.map((item: any) => ({
+            id: item.company_id,
+            company_name: item.company_name,
+            career_url: item.career_url,
+            job_class: item.job_class,
+            location_class: item.location_class,
+          }))
+        ))
       .catch((error) => console.error('Fetch error:', error))
   }, [])
 
@@ -206,10 +243,7 @@ export default function CompaniesPage() {
                       <Button variant="ghost" size="sm">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm">
-                        <Play className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" onClick={() => handleDeleteCompany(company.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>

@@ -24,6 +24,36 @@ def create_company(company: CompanyIn, db: Session = Depends(get_db)):
     db.refresh(db_company)
     return db_company
 
+@router.delete("/companies/{company_id}", response_model=CompanyOut)
+def delete_company(company_id: int, db: Session = Depends(get_db)):
+    db_company = db.query(Company).filter(Company.company_id == company_id).first()
+    if not db_company:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail = "Company not found"
+        )
+    db.delete(db_company)
+    db.commit()
+    return db_company
+
+@router.put("/companies/{company_id}", response_model=CompanyOut)
+def update_company(company_id: int, company: CompanyIn, db: Session = Depends(get_db)):
+    db_company = db.query(Company).filter(Company.company_id == company_id).first()
+    if not db_company:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Company not found"
+        )
+    
+    db_company.company_name = company.company_name
+    db_company.career_url = company.career_url
+    db_company.job_class = company.job_class
+    db_company.location_class = company.location_class
+
+    db.commit()
+    db.refresh(db_company)
+    return db_company
+
 @router.get("/internships", response_model=list[InternshipOut])
 def get_internships(db: Session = Depends(get_db)):
     internships = (
