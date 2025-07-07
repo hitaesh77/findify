@@ -37,7 +37,9 @@ type Company = {
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([])
-  const [open, setOpen] = useState(false)
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null)
+  const [openAdd, setOpenAdd] = useState(false)
+  const [openUpdate, setOpenUpdate] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const [formData, setFormData] = useState({
@@ -73,8 +75,58 @@ export default function CompaniesPage() {
     }
   }
 
-  const handleUpdateCompany = async () => {
-    
+  const handleEditClick = (company: Company) => {
+    setEditingCompany(company)
+    setFormData({
+      company_name: company.company_name,
+      career_url: company.career_url,
+      job_class: company.job_class,
+      location_class: company.location_class
+    })
+    setOpenUpdate(true)
+  }
+
+  const handleUpdateCompany = async (companyId: number, updatedData: Partial<Company>) => {
+    setLoading(true)
+    try {
+      const response = await fetch(`http://localhost:8000/companies/${companyId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedData),
+      })
+      if (response.ok) {
+        const updatedCompany = await response.json()
+        setCompanies(prev =>
+          prev.map(c =>
+            c.id === companyId
+              ? { ...updatedCompany, id: updatedCompany.company_id }
+              : c
+          )
+        )
+      } else {
+        console.error('Failed to update company')
+      }
+    } catch (error) {
+      console.error('Error updating company:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleUpdateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingCompany) return
+    await handleUpdateCompany(editingCompany.id, formData)
+    setOpenUpdate(false)
+    setEditingCompany(null)
+    setFormData({
+      company_name: '',
+      career_url: '',
+      job_class: '',
+      location_class: ''
+    })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -108,7 +160,7 @@ export default function CompaniesPage() {
           job_class: '',
           location_class: ''
         })
-        setOpen(false)
+        setOpenAdd(false)
       } else {
         console.error('Failed to create company')
         // You could add error handling here (toast notification, etc.)
@@ -144,10 +196,10 @@ export default function CompaniesPage() {
           <p className="text-gray-600">Manage tracked companies and career pages</p>
         </div>
 
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={openAdd} onOpenChange={setOpenAdd}>
           {/* <div className="flex items-center justify-center min-h-screen bg-gray-50 p-8"> */}
           <DialogTrigger asChild>
-            <Button>
+            <Button className="cursor-pointer">
               <Plus className="mr-2 h-4 w-4" />
               Add Company
             </Button>
@@ -213,6 +265,78 @@ export default function CompaniesPage() {
             </form>
           </DialogContent>
         </Dialog>
+
+        <Dialog open={openUpdate} onOpenChange={(open) => {
+          setOpenUpdate(open)
+          if (!open) {
+            setEditingCompany(null)
+            setFormData({
+              company_name: '',
+              career_url: '',
+              job_class: '',
+              location_class: ''
+            })
+          }
+        }}>
+          <DialogContent className="max-w-2xl w-full">
+            <form onSubmit={handleUpdateSubmit}>
+              <DialogHeader>
+                <DialogTitle>Update Company</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-3 mt-3">
+                <Label htmlFor="company_name">Company Name</Label>
+                <Input
+                  placeholder="Company Name"
+                  id="company_name"
+                  value={formData.company_name}
+                  onChange={(e) => handleInputChange('company_name', e.target.value)}
+                  required
+                />
+              </div>
+              <div className="grid gap-3 mt-3">
+                <Label>Career Url</Label>
+                <Input
+                  placeholder="https://company.com/careers"
+                  id="career_url"
+                  value={formData.career_url}
+                  onChange={(e) => handleInputChange('career_url', e.target.value)}
+                  required
+                />
+              </div>
+              <div className="grid gap-3 mt-3">
+                <Label>Job Class</Label>
+                <Input
+                  placeholder="hrt-card-title"
+                  id="job_class"
+                  value={formData.job_class}
+                  onChange={(e) => handleInputChange('job_class', e.target.value)}
+                  required
+                />
+              </div>
+              <div className="grid gap-3 mt-3">
+                <Label>Location Class</Label>
+                <Input
+                  placeholder="job-location-name"
+                  id="location_class"
+                  value={formData.location_class}
+                  onChange={(e) => handleInputChange('location_class', e.target.value)}
+                  required
+                />
+              </div>
+              <DialogFooter className="mt-3">
+                <DialogClose asChild>
+                  <Button variant="outline" type="button">
+                    Cancel
+                  </Button>
+                </DialogClose>
+                <Button type="submit" disabled={loading}>
+                  {loading ? 'Saving...' : 'Save Company'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
       </div>
 
       <Card>
@@ -240,10 +364,10 @@ export default function CompaniesPage() {
                   <TableCell className="text-gray-700">{company.job_class}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" onClick={() => handleEditClick(company)} className="cursor-pointer">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDeleteCompany(company.id)}>
+                      <Button variant="ghost" size="sm" onClick={() => handleDeleteCompany(company.id)} className="cursor-pointer">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
