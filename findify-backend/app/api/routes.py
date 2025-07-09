@@ -1,10 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session, joinedload
 from app.db.models import Company, Internship
 from app.db.database import get_db
 from app.api.schemas import CompanyOut, CompanyIn, InternshipOut
+from app.scraper.scraper import InternScraper
+import asyncio
 
 router = APIRouter()
+
+active_connections = []
+
+# --------------------------------------------------------------------------------------------------------- #
+# COMPANY ROUTES #
+# --------------------------------------------------------------------------------------------------------- #
 
 @router.get("/companies", response_model=list[CompanyOut])
 def get_companies(db: Session = Depends(get_db)):
@@ -54,6 +62,10 @@ def update_company(company_id: int, company: CompanyIn, db: Session = Depends(ge
     db.refresh(db_company)
     return db_company
 
+# --------------------------------------------------------------------------------------------------------- #
+# INTENRSHIP ROUTES #
+# --------------------------------------------------------------------------------------------------------- #
+
 @router.get("/internships", response_model=list[InternshipOut])
 def get_internships(db: Session = Depends(get_db)):
     internships = (
@@ -71,3 +83,35 @@ def get_internships(db: Session = Depends(get_db)):
             "date_found": internship.date_found.isoformat() if internship.date_found else "",
         })
     return result
+
+# --------------------------------------------------------------------------------------------------------- #
+# RUN ROUTES #
+# --------------------------------------------------------------------------------------------------------- #
+
+@router.post("/run-scraper")
+def run_scraper(company_name: str = Body("all")):
+    scraper = InternScraper()
+    if company_name.lower() == "all":
+        scraper.scrape_internships()
+    else:
+        company = scraper.db.query(Company).filter(Company.company_name == company_name).first()
+        if company:
+            scraper.scrape_company(company.company_id)
+            return {"message": f"Company run completed for '{company_name}'"}
+        else:
+            return {"message": f"Company '{company_name}' not found"}
+    return {"message": "Scraper run completed"}
+
+@router.websocket("/ws/scraper-log")
+async def scraper_log_ws(websocket: WebSocket):
+    await websocket.accept()
+    active_connections.append(websocket)
+    try:
+        while True:
+            await asyncio.sleep(1)
+    except WebSocketDisconnect:
+        active_connections.remove(websocket)
+    
+async def send_scraper_log(message: str):
+    for ws in active_connections:
+        await ws.send_text(message)

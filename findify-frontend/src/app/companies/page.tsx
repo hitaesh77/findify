@@ -341,27 +341,27 @@ export default function CompaniesPage() {
 
       <Card>
         <CardContent className="p-0">
-          <Table>
+          <Table className="table-fixed w-full">
             <TableHeader>
               <TableRow>
-                <TableHead className="font-semibold text-gray-900">Company</TableHead>
-                <TableHead className="font-semibold text-gray-900">Career Page URL</TableHead>
-                <TableHead className="font-semibold text-gray-900">Status</TableHead>
-                <TableHead className="font-semibold text-gray-900">Job Class</TableHead>
-                <TableHead className="font-semibold text-gray-900">Actions</TableHead>
+                <TableHead className="w-32 font-semibold text-gray-900">Company</TableHead>
+                <TableHead className="w-64 font-semibold text-gray-900">Career Page URL</TableHead>
+                <TableHead className="w-16 font-semibold text-gray-900">Status</TableHead>
+                <TableHead className="w-32 font-semibold text-gray-900">Job Class</TableHead>
+                <TableHead className="w-16 font-semibold text-gray-900">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {companies.map((company) => (
                 <TableRow key={company.id ?? company.company_name}>
-                  <TableCell className="font-medium text-gray-900">{company.company_name}</TableCell>
-                  <TableCell className="font-mono text-sm text-gray-600">
+                  <TableCell className="font-medium text-gray-900 break-words whitespace-normal">{company.company_name}</TableCell>
+                  <TableCell className="font-mono text-sm text-gray-600 break-words whitespace-normal">
                     {company.career_url}
                   </TableCell>
                   <TableCell>
                     <Badge variant="default">Active</Badge>
                   </TableCell>
-                  <TableCell className="text-gray-700">{company.job_class}</TableCell>
+                  <TableCell className="text-gray-700 break-words whitespace-normal">{company.job_class}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
                       <Button variant="ghost" size="sm" onClick={() => handleEditClick(company)} className="cursor-pointer">

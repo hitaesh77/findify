@@ -89,63 +89,6 @@ export default function InternshipsPage() {
         </div>
       </div>
 
-      {/* Filters */}
-      <Card className="border border-gray-200">
-        {/* <CardContent className="p-2">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search internships..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 outline"
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="All Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="New">New</SelectItem>
-                <SelectItem value="Applied">Applied</SelectItem>
-                <SelectItem value="Interview">Interview</SelectItem>
-                <SelectItem value="Rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={companyFilter} onValueChange={setCompanyFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="All Companies" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Companies</SelectItem>
-                {Array.from(new Set(internshipsList.map((i) => i.company))).map((company) => (
-                  <SelectItem key={company} value={company}>
-                    {company}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="All Types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="Remote">Remote</SelectItem>
-                <SelectItem value="On-site">On-site</SelectItem>
-                <SelectItem value="Hybrid">Hybrid</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" className="flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              More Filters
-            </Button>
-          </div>
-        </CardContent> */}
-      </Card>
-
       {/* Internships Table */}
       <Card className="border border-gray-200">
         <CardContent className="p-0">

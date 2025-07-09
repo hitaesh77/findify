@@ -118,6 +118,19 @@ class InternScraper:
             if job_titles:
                 self.search_student_jobs(job_titles, company)
                 print(f"Scraped {len(job_titles)} job titles for {company.company_name}")
+        
+    def scrape_company(self, company_id):
+        company = self.db.query(Company).filter_by(company_id=company_id).first()
+        if not company:
+            print(f"Company with ID {company_id} not found")
+            return
+
+        job_titles = self.get_all_jobs(company)
+        if job_titles:
+            self.search_student_jobs(job_titles, company)
+            print(f"Scraped {len(job_titles)} job titles for {company.company_name}")
+        else:
+            print(f"No job titles found for {company.company_name}")
 
 
 # Temporary Main For Testing
