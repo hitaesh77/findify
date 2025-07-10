@@ -1,5 +1,5 @@
 import pandas as pd
-from collections import defaultdict
+import asyncio
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -14,7 +14,7 @@ from app.db.database import SessionLocal
 from bs4 import BeautifulSoup
 
 from app.scraper.config import EXCEL_PATH, STUDENT_KEYWORDS
-from app.scraper.utils import is_valid_url, print_intern_dict, test_company_student_jobs, to_css_selector
+from app.scraper.utils import is_valid_url, print_intern_dict, to_css_selector, log_and_send
 
 class InternScraper:
     def __init__(self):
@@ -37,7 +37,6 @@ class InternScraper:
 
             # Check if company already exists
             existing = self.db.query(Company).filter_by(company_name=company_name).first()
-            print(existing)
             if not existing:
                 new_company = Company(
                     company_name=company_name,
@@ -46,7 +45,8 @@ class InternScraper:
                     location_class=location_class
                 )
                 self.db.add(new_company)
-                print(f"Added {company_name}")
+                # print(f"Added {company_name}")
+                asyncio.run(log_and_send(f"Added {company_name}"))
         
         self.db.commit()
     
@@ -84,7 +84,8 @@ class InternScraper:
         return job_titles
     
     def search_student_jobs(self, job_titles, company):
-        print(f"Searching for student jobs at {company.company_name}...")
+        # print(f"Searching for student jobs at {company.company_name}...")
+        asyncio.run(log_and_send(f"Searching for student jobs at {company.company_name}..."))
         for title in job_titles:
             for keyword in STUDENT_KEYWORDS:
                 if keyword in title.lower():
@@ -99,9 +100,11 @@ class InternScraper:
                             company_id = company.company_id
                         )
                         self.db.add(new_internship)
-                        print(f"Found internship: {title} at {company.company_name}")
+                        # print(f"Found internship: {title} at {company.company_name}")
+                        asyncio.run(log_and_send(f"Found internship: {title} at {company.company_name}"))
                     else:
                         print(f"Internship {title} already exists for {company.company_name}")  
+                        asyncio.run(log_and_send(f"Internship {title} already exists for {company.company_name}"))
                     break
 
         try:
@@ -117,20 +120,28 @@ class InternScraper:
             job_titles = self.get_all_jobs(company)
             if job_titles:
                 self.search_student_jobs(job_titles, company)
-                print(f"Scraped {len(job_titles)} job titles for {company.company_name}")
+                # print(f"Scraped {len(job_titles)} job titles for {company.company_name}")
+                asyncio.run(log_and_send(f"Scraped {len(job_titles)} job titles for {company.company_name}"))
+        
+        asyncio.run(log_and_send("__SCRAPER_DONE__"))
         
     def scrape_company(self, company_id):
         company = self.db.query(Company).filter_by(company_id=company_id).first()
         if not company:
-            print(f"Company with ID {company_id} not found")
+            # print(f"Company with ID {company_id} not found")
+            asyncio.run(log_and_send(f"Company with ID {company_id} not found"))
             return
 
         job_titles = self.get_all_jobs(company)
         if job_titles:
             self.search_student_jobs(job_titles, company)
-            print(f"Scraped {len(job_titles)} job titles for {company.company_name}")
+            # print(f"Scraped {len(job_titles)} job titles for {company.company_name}")
+            asyncio.run(log_and_send(f"Scraped {len(job_titles)} job titles for {company.company_name}"))
         else:
-            print(f"No job titles found for {company.company_name}")
+            # print(f"No job titles found for {company.company_name}")
+            asyncio.run(log_and_send(f"No job titles found for {company.company_name}"))
+
+        asyncio.run(log_and_send("__SCRAPER_DONE__"))
 
 
 # Temporary Main For Testing

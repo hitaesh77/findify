@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Toaster } from "@/components/ui/sonner"
 import { toast } from "sonner"
@@ -13,9 +13,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Edit, Play, Trash2, Plus } from 'lucide-react'
-import { DialogTrigger } from '@radix-ui/react-dialog'
+import { Play } from 'lucide-react'
 
 type Company = {
     id: number
@@ -29,9 +27,14 @@ export default function RunPage() {
     const [companies, setCompanies] = useState<Company[]>([])
     const [selectedCompany, setSelectedCompany] = useState<string>('all')
     const [loading, setLoading] = useState(false)
+    const [liveLog, setLiveLog] = useState<string[]>([]);
+    const wsRef = useRef<WebSocket | null>(null);
+    const [scraperRunning, setScraperRunning] = useState(false);
 
     const handleRunScraper = async () => {
         setLoading(true)
+        setScraperRunning(true)
+        setLiveLog([]) // clear previos logs
         try {
             const response = await fetch('http://localhost:8000/run-scraper', {
                 method: 'POST',
@@ -64,6 +67,35 @@ export default function RunPage() {
                 ))
             .catch((error) => console.error('Fetch error:', error))
     }, [])
+
+    useEffect(() => {
+        if (scraperRunning) {
+            wsRef.current = new WebSocket("ws://localhost:8000/ws/scraper-log");
+            wsRef.current.onmessage = (event) => {
+                const now = new Date();
+                const timestamp = `[${now.toLocaleTimeString()}]`;
+                if (event.data === "__SCRAPER_DONE__") {
+                    wsRef.current?.close();
+                } else {
+                    setLiveLog((prev) => [...prev, `${timestamp} ${event.data}`]);
+                }
+            };
+            wsRef.current.onclose = () => {
+                setScraperRunning(false)
+                // setLiveLog(["Ready to execute scraping operation..."]);
+            };
+        }
+        return () => {
+            wsRef.current?.close();
+        };
+
+    }, [scraperRunning]);
+
+    useEffect(() => {
+        if (!scraperRunning) {
+            setLiveLog(["Ready to execute scraping operation..."]);
+        }
+    }, [scraperRunning]);
 
     return (
         <div className="max-w-4xl mx-auto p-6 space-y-8">
@@ -105,6 +137,22 @@ export default function RunPage() {
                                 {loading ? "Running..." : "Run Scraper"}
                             </Button>
                         </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Live Logs */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Live Feed</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="bg-gray-900 text-green-400 rounded p-4 text-sm min-h-[200px] overflow-y-auto">
+                        {liveLog.map((log, index) => (
+                            <div key={index} className="mb-1" style={{ fontFamily: "'Lucida Console', 'Courier New', monospace" }}>
+                                {log}
+                            </div>
+                        ))}
                     </div>
                 </CardContent>
             </Card>

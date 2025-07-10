@@ -1,5 +1,6 @@
 from urllib.parse import urlparse
 import re
+from app.scraper.log_ws import send_scraper_log
 
 # helper functions
 def is_valid_url(url):
@@ -28,3 +29,9 @@ def to_css_selector(class_str: str) -> str:
         raise ValueError("Empty class name received")
     classes = class_str.split()
     return '.' + '.'.join(escape_css_class(cls) for cls in classes)
+
+async def log_and_send(message):
+    print(message)
+    if not isinstance(message, str):
+        message = str(message)
+    await send_scraper_log(message)

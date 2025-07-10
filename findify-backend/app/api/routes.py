@@ -4,11 +4,11 @@ from app.db.models import Company, Internship
 from app.db.database import get_db
 from app.api.schemas import CompanyOut, CompanyIn, InternshipOut
 from app.scraper.scraper import InternScraper
+from app.scraper.log_ws import active_connections
+# from app.scraper.utils import send_scraper_log
 import asyncio
 
 router = APIRouter()
-
-active_connections = []
 
 # --------------------------------------------------------------------------------------------------------- #
 # COMPANY ROUTES #
@@ -110,8 +110,5 @@ async def scraper_log_ws(websocket: WebSocket):
         while True:
             await asyncio.sleep(1)
     except WebSocketDisconnect:
-        active_connections.remove(websocket)
-    
-async def send_scraper_log(message: str):
-    for ws in active_connections:
-        await ws.send_text(message)
+        if websocket in active_connections:
+            active_connections.remove(websocket)
