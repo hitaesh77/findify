@@ -9,7 +9,7 @@ class CompanyOut(BaseModel):
     location_class: str
 
     class Config:
-        orm_mode = True
+        # orm_mode = True
         from_attributes = True
 
 class CompanyIn(BaseModel):
@@ -19,7 +19,7 @@ class CompanyIn(BaseModel):
     location_class: str
 
     class Config:
-        orm_mode = True
+        # orm_mode = True
         from_attributes = True
 
 class InternshipOut(BaseModel):

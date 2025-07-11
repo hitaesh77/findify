@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Body, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, status, Body, WebSocket, WebSocketDisconnect, BackgroundTasks
 from sqlalchemy.orm import Session, joinedload
 from app.db.models import Company, Internship
 from app.db.database import get_db
@@ -7,6 +7,8 @@ from app.scraper.scraper import InternScraper
 from app.scraper.log_ws import active_connections
 # from app.scraper.utils import send_scraper_log
 import asyncio
+import sys
+import threading
 
 router = APIRouter()
 
@@ -88,19 +90,48 @@ def get_internships(db: Session = Depends(get_db)):
 # RUN ROUTES #
 # --------------------------------------------------------------------------------------------------------- #
 
-@router.post("/run-scraper")
-def run_scraper(company_name: str = Body("all")):
+def run_scraper_in_thread(company_name: str):
+    """Run scraper in a separate thread with its own event loop"""
+    # Set the event loop policy for Windows
+    if sys.platform == 'win32':
+        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+    
+    # Create a new event loop for this thread
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
+    try:
+        loop.run_until_complete(run_scraper_task(company_name))
+    finally:
+        loop.close()
+
+async def run_scraper_task(company_name: str):
     scraper = InternScraper()
+    await scraper.initialize()
+
     if company_name.lower() == "all":
-        scraper.scrape_internships()
+        await scraper.scrape_internships()
     else:
         company = scraper.db.query(Company).filter(Company.company_name == company_name).first()
         if company:
-            scraper.scrape_company(company.company_id)
-            return {"message": f"Company run completed for '{company_name}'"}
-        else:
+            await scraper.scrape_company(company.company_id)
+
+@router.post("/run-scraper")
+async def run_scraper(background_tasks: BackgroundTasks, company_name: str = Body("all")):
+    """Run scraper in background"""
+    # Use threading instead of BackgroundTasks for better asyncio compatibility
+    thread = threading.Thread(target=run_scraper_in_thread, args=(company_name,))
+    thread.start()
+    
+    if company_name.lower() == "all":
+        return {"message": "Scraper started for all companies"}
+    else:
+        scraper = InternScraper()
+        await scraper.initialize()
+        company = scraper.db.query(Company).filter(Company.company_name == company_name).first()
+        if not company:
             return {"message": f"Company '{company_name}' not found"}
-    return {"message": "Scraper run completed"}
+        return {"message": f"Scraper started for '{company_name}'"}
 
 @router.websocket("/ws/scraper-log")
 async def scraper_log_ws(websocket: WebSocket):
