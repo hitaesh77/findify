@@ -117,9 +117,8 @@ async def run_scraper_task(company_name: str):
             await scraper.scrape_company(company.company_id)
 
 @router.post("/run-scraper")
-async def run_scraper(background_tasks: BackgroundTasks, company_name: str = Body("all")):
-    """Run scraper in background"""
-    # Use threading instead of BackgroundTasks for better asyncio compatibility
+async def run_scraper(company_name: str = Body("all")):
+    # Use threading instead of BackgroundTasks (tunning scraper in background)
     thread = threading.Thread(target=run_scraper_in_thread, args=(company_name,))
     thread.start()
     
