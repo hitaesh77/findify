@@ -1,103 +1,89 @@
-import Image from "next/image";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            save changes or sum ts
-          </li>
-        </ol>
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back, User!</h1>
+        <p className="text-lg text-gray-600">
+          Your Findify scraper is actively tracking <span className="font-semibold text-blue-600">15 companies</span> and has discovered <span className="font-semibold text-blue-600">7 new internships</span> this week.
+        </p>
+      </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      {/* Key Metrics / Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {/* Card 1: Internship Overview */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Internship Snapshot</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-gray-700">
+            <p>Total Internships Tracked: <span className="font-medium text-blue-600">125</span></p>
+            <p>New Internships (Last 7 Days): <span className="font-medium text-blue-600">7</span></p>
+            <p>Applied To: <span className="font-medium text-blue-600">12</span></p>
+          </CardContent>
+          <CardFooter>
+            <Button>View All Internships</Button>
+          </CardFooter>
+        </Card>
+
+        {/* Card 2: Scraper Activity */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Scraper Status</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-gray-700">
+            <p>Last Run: <span className="font-medium text-gray-800">Yesterday at 3:00 PM</span></p>
+            <p>Next Scheduled Run: <span className="font-medium text-gray-800">Tomorrow at 9:00 AM</span></p>
+            <p>Companies Tracked: <span className="font-medium text-blue-600">15</span></p>
+            <p className="flex items-center">Status:
+              <span className="ml-2 w-3 h-3 rounded-full bg-green-500 inline-block"></span>
+              <span className="ml-1 font-medium text-green-700">Active</span>
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Button>Run Scraper Now</Button>
+          </CardFooter>
+        </Card>
+
+        {/* Card 3: Notifications & Alerts */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Alerts</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-gray-700">
+            <p>Last Alert: <span className="font-medium text-gray-800">Software Eng. Intern</span> at <span className="font-medium text-gray-800">Google</span> (2024-07-15 10:30)</p>
+            <p>Unread Notifications: <span className="font-medium text-blue-600">3</span></p>
+            <p className="flex items-center">Email Alerts:
+              <span className="ml-2 w-3 h-3 rounded-full bg-green-500 inline-block"></span>
+              <span className="ml-1 font-medium text-green-700">On</span>
+            </p>
+            <p className="flex items-center">SMS Alerts:
+              <span className="ml-2 w-3 h-3 rounded-full bg-gray-400 inline-block"></span>
+              <span className="ml-1 font-medium text-gray-600">Off</span>
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Button>Manage Notifications</Button>
+          </CardFooter>
+        </Card>
+      </div>
+
+      {/* Quick Actions / Call to Action */}
+      <Card className="text-center">
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent className="mb-4">
+          <p className="text-gray-700">Looking for something specific or want to add a new company?</p>
+        </CardContent>
+        <CardFooter className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
+          <Input placeholder="Search internships..." className="w-full sm:w-auto" />
+          <Button variant="secondary">Add New Company</Button>
+        </CardFooter>
+      </Card>
+    </main>
   );
 }

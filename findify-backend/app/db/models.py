@@ -3,6 +3,14 @@ from sqlalchemy.orm import relationship
 from .database import Base
 from datetime import datetime
 
+class User(Base):
+    __tablename__ = "users"
+
+    user_id = Column(String, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True)
+    
+    companies = relationship("Company", back_populates="user")
+
 class Company(Base):
     __tablename__ = "companies"
 
@@ -10,7 +18,9 @@ class Company(Base):
     company_name = Column(String)
     career_url = Column(String)
     job_class = Column(String)
-    location_class = Column(String)
+
+    user_id = Column(String, ForeignKey("users.user_id"))
+    user = relationship("User", back_populates="companies")
 
     internships = relationship("Internship", back_populates="company")
 

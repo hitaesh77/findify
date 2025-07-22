@@ -17,12 +17,17 @@ router = APIRouter()
 # --------------------------------------------------------------------------------------------------------- #
 
 @router.get("/companies", response_model=list[CompanyOut])
-def get_companies(db: Session = Depends(get_db)):
-    return db.query(Company).all()
+def get_companies(user_id: str, db: Session = Depends(get_db)):
+    return db.query(Company).filter(Company.user_id == user_id).all()
+    # return db.query(Company).all()
 
 @router.post("/companies", response_model=CompanyOut)
 def create_company(company: CompanyIn, db: Session = Depends(get_db)):
-    existing = db.query(Company).filter(Company.company_name == company.company_name).first()
+    existing = db.query(Company).filter(
+        Company.company_name == company.company_name,
+        Company.user_id == company.user_id
+        ).first()
+    
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -58,7 +63,6 @@ def update_company(company_id: int, company: CompanyIn, db: Session = Depends(ge
     db_company.company_name = company.company_name
     db_company.career_url = company.career_url
     db_company.job_class = company.job_class
-    db_company.location_class = company.location_class
 
     db.commit()
     db.refresh(db_company)

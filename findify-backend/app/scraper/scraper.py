@@ -36,7 +36,6 @@ class InternScraper:
             company_name = urls_df.loc[i, "company_name"]
             career_url = urls_df.loc[i, "career_url"]
             job_class = urls_df.loc[i, "job_class"]
-            location_class = urls_df.loc[i, "location_class"]
 
             # Check if company already exists
             existing = self.db.query(Company).filter_by(company_name=company_name).first()
@@ -45,7 +44,6 @@ class InternScraper:
                     company_name=company_name,
                     career_url=career_url,
                     job_class=job_class,
-                    location_class=location_class
                 )
                 self.db.add(new_company)
                 # print(f"Added {company_name}")
@@ -156,10 +154,10 @@ class InternScraper:
             "removed": list(deleted_internships)
         }
     
-    async def scrape_internships(self):
+    async def scrape_internships(self, user_id="admin"):
         all_changes = []
 
-        companies = self.db.query(Company).all()
+        companies = self.db.query(Company).filter_by(user_id=user_id).all()
 
         for company in companies:
             job_titles = await self.get_all_jobs(company)
@@ -206,15 +204,15 @@ class InternScraper:
 
             summary = []
             if changes["new"] or changes["removed"]:
-                summary.append(f"{changes['company']}\n"
-                            f" - {len(changes['new'])} added\n"
-                            f" - {len(changes['removed'])} removed")
+                summary.append(f"- {len(changes['new'])} NEW INTERNSHIP{'S' if len(changes['new']) != 1 else ''}, APPLY!!!!")
+                summary.append(f"- {len(changes['removed'])} EXPIRED INTERNSHIP{'S' if len(changes['removed']) != 1 else ''}")
             
             if summary:
-                await log_and_send("Internship Scrape Summary:\n" + "\n\n".join(summary))
+                await log_and_send("Internship Scrape Summary:\n" + "\n".join(summary))
+                email_body = f"<p>New Internship update for {company.company_name}!</p>" + "".join([f"<p>{line}</p>" for line in summary])
                 send_email(
-                    subject="Internship Scrape Summary",
-                    body="Internship Scrape Summary for {company.company_name}:\n" + "\n\n".join(summary),
+                    subject=f"New Internship update for {company.company_name}!",
+                    body=email_body.replace('\n', '\n\n'),
                     to_email=os.getenv("TEST_EMAIL")
                 )
             
@@ -236,5 +234,5 @@ class InternScraper:
 # Temporary Main For Testing
 if __name__ == "__main__":
     scraper = InternScraper()
-    # asyncio.run(scraper.scrape_internships())
-    asyncio.run(scraper.scrape_company(9))
+    asyncio.run(scraper.scrape_internships())
+    # asyncio.run(scraper.scrape_company(9))

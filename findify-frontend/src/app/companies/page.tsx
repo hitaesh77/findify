@@ -32,8 +32,10 @@ type Company = {
   company_name: string
   career_url: string
   job_class: string
-  location_class: string
+  user_id: string
 }
+
+const CURRENT_USER_ID = 'admin'
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([])
@@ -46,7 +48,7 @@ export default function CompaniesPage() {
     company_name: '',
     career_url: '',
     job_class: '',
-    location_class: ''
+    user_id: CURRENT_USER_ID
   })
 
   const handleInputChange = (field: string, value: string) => {
@@ -81,7 +83,7 @@ export default function CompaniesPage() {
       company_name: company.company_name,
       career_url: company.career_url,
       job_class: company.job_class,
-      location_class: company.location_class
+      user_id: CURRENT_USER_ID
     })
     setOpenUpdate(true)
   }
@@ -125,21 +127,22 @@ export default function CompaniesPage() {
       company_name: '',
       career_url: '',
       job_class: '',
-      location_class: ''
+      user_id: CURRENT_USER_ID
     })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    console.log('Fetching: http://localhost:8000/companies')
 
     try {
-      const response = await fetch('http://localhost:8000/companies', {
+      const response = await fetch(`http://localhost:8000/companies`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({...formData, user_id: CURRENT_USER_ID})
       })
 
       if (response.ok) {
@@ -158,7 +161,7 @@ export default function CompaniesPage() {
           company_name: '',
           career_url: '',
           job_class: '',
-          location_class: ''
+          user_id: CURRENT_USER_ID
         })
         setOpenAdd(false)
       } else {
@@ -173,7 +176,7 @@ export default function CompaniesPage() {
   }
 
   useEffect(() => {
-    fetch('http://localhost:8000/companies')
+    fetch(`http://localhost:8000/companies?user_id=${CURRENT_USER_ID}`)
       .then((res) => res.json())
       .then((data) =>
         setCompanies(
@@ -181,8 +184,7 @@ export default function CompaniesPage() {
             id: item.company_id,
             company_name: item.company_name,
             career_url: item.career_url,
-            job_class: item.job_class,
-            location_class: item.location_class,
+            job_class: item.job_class
           }))
         ))
       .catch((error) => console.error('Fetch error:', error))
@@ -242,16 +244,6 @@ export default function CompaniesPage() {
                   required
                 />
               </div>
-              <div className="grid gap-3 mt-3">
-                <Label>Location Class</Label>
-                <Input
-                  placeholder="job-location-name"
-                  id="location_class"
-                  value={formData.location_class}
-                  onChange={(e) => handleInputChange('location_class', e.target.value)}
-                  required
-                />
-              </div>
               <DialogFooter className="mt-3">
                 <DialogClose asChild>
                   <Button variant="outline" type="button">
@@ -274,7 +266,7 @@ export default function CompaniesPage() {
               company_name: '',
               career_url: '',
               job_class: '',
-              location_class: ''
+              user_id: CURRENT_USER_ID
             })
           }
         }}>
@@ -310,16 +302,6 @@ export default function CompaniesPage() {
                   id="job_class"
                   value={formData.job_class}
                   onChange={(e) => handleInputChange('job_class', e.target.value)}
-                  required
-                />
-              </div>
-              <div className="grid gap-3 mt-3">
-                <Label>Location Class</Label>
-                <Input
-                  placeholder="job-location-name"
-                  id="location_class"
-                  value={formData.location_class}
-                  onChange={(e) => handleInputChange('location_class', e.target.value)}
                   required
                 />
               </div>

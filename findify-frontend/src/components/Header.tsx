@@ -7,9 +7,8 @@ import { UserIcon, Cog6ToothIcon } from '@heroicons/react/16/solid'
 
 
 const tabs = [
-  { name: 'Dashboard', href: '/dashboard' },
-  { name: 'Run', href: '/run' },
   { name: 'Companies', href: '/companies' },
+  { name: 'Run', href: '/run' },
   { name: 'Internships', href: '/internships' },
   { name: 'Notifications', href: '/notifications' },
 ]

@@ -15,12 +15,14 @@ import {
 import { Label } from '@/components/ui/label'
 import { Play } from 'lucide-react'
 
+const CURRENT_USER_ID = "admin"
+
 type Company = {
     id: number
     company_name: string
     career_url: string
     job_class: string
-    location_class: string
+    user_id: string
 }
 
 export default function RunPage() {
@@ -53,7 +55,7 @@ export default function RunPage() {
     }
 
     useEffect(() => {
-        fetch('http://localhost:8000/companies')
+        fetch(`http://localhost:8000/companies?user_id=${CURRENT_USER_ID}`)
             .then((res) => res.json())
             .then((data) =>
                 setCompanies(
@@ -62,7 +64,7 @@ export default function RunPage() {
                         company_name: item.company_name,
                         career_url: item.career_url,
                         job_class: item.job_class,
-                        location_class: item.location_class,
+                        user_id: CURRENT_USER_ID
                     }))
                 ))
             .catch((error) => console.error('Fetch error:', error))
@@ -149,7 +151,7 @@ export default function RunPage() {
                 <CardContent>
                     <div className="bg-gray-900 text-green-400 rounded p-4 text-sm min-h-[200px] overflow-y-auto">
                         {liveLog.map((log, index) => (
-                            <div key={index} className="mb-1" style={{ fontFamily: "'Lucida Console', 'Courier New', monospace" }}>
+                            <div key={index} className="mb-1" style={{ fontFamily: 'Consolas, Monaco, "Courier New", monospace', fontFeatureSettings: "normal", }}>
                                 {log}
                             </div>
                         ))}
