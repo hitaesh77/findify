@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Body, WebSocket, WebSocketDisconnect, BackgroundTasks
 from sqlalchemy.orm import Session, joinedload
-from app.db.models import Company, Internship
+from app.db.models import Company, Internship, ScrapeSchedule
 from app.db.database import get_db
-from app.api.schemas import CompanyOut, CompanyIn, InternshipOut
+from app.api.schemas import CompanyOut, CompanyIn, InternshipOut, ScheduleIn
 from app.scraper.scraper import InternScraper
 from app.scraper.log_ws import active_connections
 # from app.scraper.utils import send_scraper_log
@@ -146,3 +146,23 @@ async def scraper_log_ws(websocket: WebSocket):
     except WebSocketDisconnect:
         if websocket in active_connections:
             active_connections.remove(websocket)
+
+# --------------------------------------------------------------------------------------------------------- #
+# SCHEDULE ROUTES #
+# --------------------------------------------------------------------------------------------------------- #
+@router.post("/schedule")
+def create_schedule(schedule: ScheduleIn, db: Session = Depends(get_db)):
+    db.query(ScrapeSchedule).filter(ScrapeSchedule.user_id == schedule.user_id).delete()
+
+    new_entries = []
+    for day in schedule.days:
+        for time_of_day in schedule.times:
+            entry = ScrapeSchedule(user_id=schedule.user_id, day_of_week=day.lower(), time_of_day=time_of_day)
+            db.add(entry)
+            new_entries.append(entry)
+    
+    db.commit()
+    
+    # update_user_schedule(schedule.user_id, db)
+
+    return new_entries

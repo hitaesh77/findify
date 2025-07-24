@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Time
 from sqlalchemy.orm import relationship
 from .database import Base
 from datetime import datetime
@@ -35,3 +35,13 @@ class Internship(Base):
     date_found = Column(DateTime, default=datetime.utcnow)
 
     company = relationship("Company", back_populates="internships")
+
+class ScrapeSchedule(Base):
+    __tablename__ = "scrape_schedules"
+
+    schedule_id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String, ForeignKey("users.user_id"))
+    day_of_week = Column(String)
+    time_of_day = Column(Time)
+
+    user = relationship("User")

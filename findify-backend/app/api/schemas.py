@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, time
 
 class CompanyOut(BaseModel):
     company_id: int
@@ -31,3 +31,10 @@ class InternshipOut(BaseModel):
     class Config:
         from_attributes = True
 
+class ScheduleIn(BaseModel):
+    user_id: str
+    days: list[str]
+    times: list[time]
+
+    class Config:
+        from_attributes = True
