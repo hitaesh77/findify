@@ -5,6 +5,7 @@ from app.db.database import get_db
 from app.api.schemas import CompanyOut, CompanyIn, InternshipOut, ScheduleIn
 from app.scraper.scraper import InternScraper
 from app.scraper.log_ws import active_connections
+from app.scheduler.scheduler import update_user_schedule
 # from app.scraper.utils import send_scraper_log
 import asyncio
 import sys
@@ -163,6 +164,6 @@ def create_schedule(schedule: ScheduleIn, db: Session = Depends(get_db)):
     
     db.commit()
     
-    # update_user_schedule(schedule.user_id, db)
+    update_user_schedule(schedule.user_id, db)
 
     return new_entries

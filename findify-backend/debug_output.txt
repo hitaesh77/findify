@@ -1,10 +1,10 @@
-technical solutions data analyst ii
-office operations associate - nyc
-front desk associate - nyc
-senior product manager, application security testing
-senior software engineer - observability infrastructure sre
-recruiter, business recruiting - contract
-recruiter, tech recruiting - product design - contract
-recruiter, tech recruiting - product design - contract
-graphic designer - new york
-senior data scientist - core analytics
+staff software engineer - metrics query
+senior product designer, data visualization
+senior product designer, cost
+gtm strategy and operations analyst - commercial
+staff software engineer - postgresql
+premier support engineer 2 - new york
+director, financial systems & transformation
+senior software engineer - ai code gen - agent engineer
+senior fp&a analyst - r&d
+staff software engineer - ml observability
