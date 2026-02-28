@@ -27,6 +27,10 @@ import { Input } from '@/components/ui/input'
 import { Edit, Play, Trash2, Plus } from 'lucide-react'
 import { DialogTrigger } from '@radix-ui/react-dialog'
 
+// --- CODESPACE CONFIGURATION ---
+const CURRENT_USER_ID = 'admin'
+const BACKEND_URL = "https://supreme-giggle-69rjv4vpgvrj34q7x-8000.app.github.dev"
+
 type Company = {
   id: number
   company_name: string
@@ -34,8 +38,6 @@ type Company = {
   job_class: string
   user_id: string
 }
-
-const CURRENT_USER_ID = 'admin'
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([])
@@ -59,10 +61,9 @@ export default function CompaniesPage() {
   }
 
   const handleDeleteCompany = async (companyId: number) => {
-    console.log(companies)
     setLoading(true)
     try {
-      const response = await fetch(`http://localhost:8000/companies/${companyId}`, {
+      const response = await fetch(`${BACKEND_URL}/companies/${companyId}`, {
         method: 'DELETE',
       })
       if (response.ok) {
@@ -91,7 +92,7 @@ export default function CompaniesPage() {
   const handleUpdateCompany = async (companyId: number, updatedData: Partial<Company>) => {
     setLoading(true)
     try {
-      const response = await fetch(`http://localhost:8000/companies/${companyId}`, {
+      const response = await fetch(`${BACKEND_URL}/companies/${companyId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -134,20 +135,18 @@ export default function CompaniesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    console.log('Fetching: http://localhost:8000/companies')
 
     try {
-      const response = await fetch(`http://localhost:8000/companies`, {
+      const response = await fetch(`${BACKEND_URL}/companies`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({...formData, user_id: CURRENT_USER_ID})
+        body: JSON.stringify({ ...formData, user_id: CURRENT_USER_ID })
       })
 
       if (response.ok) {
         const newCompany = await response.json()
-        // Add the new company to the list
         setCompanies(prev => [
           ...prev,
           {
@@ -156,7 +155,6 @@ export default function CompaniesPage() {
           },
         ])
 
-        // Reset form and close dialog
         setFormData({
           company_name: '',
           career_url: '',
@@ -166,7 +164,6 @@ export default function CompaniesPage() {
         setOpenAdd(false)
       } else {
         console.error('Failed to create company')
-        // You could add error handling here (toast notification, etc.)
       }
     } catch (error) {
       console.error('Error creating company:', error)
@@ -176,7 +173,7 @@ export default function CompaniesPage() {
   }
 
   useEffect(() => {
-    fetch(`http://localhost:8000/companies?user_id=${CURRENT_USER_ID}`)
+    fetch(`${BACKEND_URL}/companies?user_id=${CURRENT_USER_ID}`)
       .then((res) => res.json())
       .then((data) =>
         setCompanies(
@@ -199,7 +196,6 @@ export default function CompaniesPage() {
         </div>
 
         <Dialog open={openAdd} onOpenChange={setOpenAdd}>
-          {/* <div className="flex items-center justify-center min-h-screen bg-gray-50 p-8"> */}
           <DialogTrigger asChild>
             <Button className="cursor-pointer">
               <Plus className="mr-2 h-4 w-4" />
@@ -318,7 +314,6 @@ export default function CompaniesPage() {
             </form>
           </DialogContent>
         </Dialog>
-
       </div>
 
       <Card>

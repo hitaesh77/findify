@@ -16,7 +16,6 @@ class CompanyIn(BaseModel):
     company_name: str
     career_url: str
     job_class: str
-    user_id: str
 
     class Config:
         # orm_mode = True

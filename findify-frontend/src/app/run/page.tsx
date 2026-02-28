@@ -15,7 +15,10 @@ import {
 import { Label } from '@/components/ui/label'
 import { Play } from 'lucide-react'
 
+// --- HARDCODED CODESPACE LINKS ---
 const CURRENT_USER_ID = "admin"
+const BACKEND_HTTP_URL = "https://supreme-giggle-69rjv4vpgvrj34q7x-8000.app.github.dev"
+const BACKEND_WS_URL = "wss://supreme-giggle-69rjv4vpgvrj34q7x-8000.app.github.dev"
 
 type Company = {
     id: number
@@ -36,9 +39,9 @@ export default function RunPage() {
     const handleRunScraper = async () => {
         setLoading(true)
         setScraperRunning(true)
-        setLiveLog([]) // clear previos logs
+        setLiveLog([]) // clear previous logs
         try {
-            const response = await fetch('http://localhost:8000/run-scraper', {
+            const response = await fetch(`${BACKEND_HTTP_URL}/run-scraper`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(selectedCompany)
@@ -55,7 +58,7 @@ export default function RunPage() {
     }
 
     useEffect(() => {
-        fetch(`http://localhost:8000/companies?user_id=${CURRENT_USER_ID}`)
+        fetch(`${BACKEND_HTTP_URL}/companies?user_id=${CURRENT_USER_ID}`)
             .then((res) => res.json())
             .then((data) =>
                 setCompanies(
@@ -72,7 +75,9 @@ export default function RunPage() {
 
     useEffect(() => {
         if (scraperRunning) {
-            wsRef.current = new WebSocket("ws://localhost:8000/ws/scraper-log");
+            // Using wss:// for secure Codespace connection
+            wsRef.current = new WebSocket(`${BACKEND_WS_URL}/ws/scraper-log`);
+            
             wsRef.current.onmessage = (event) => {
                 const now = new Date();
                 const timestamp = `[${now.toLocaleTimeString()}]`;
@@ -84,8 +89,11 @@ export default function RunPage() {
             };
             wsRef.current.onclose = () => {
                 setScraperRunning(false)
-                // setLiveLog(["Ready to execute scraping operation..."]);
             };
+            wsRef.current.onerror = (err) => {
+                console.error("WebSocket Error:", err);
+                setScraperRunning(false);
+            }
         }
         return () => {
             wsRef.current?.close();
@@ -149,9 +157,9 @@ export default function RunPage() {
                     <CardTitle>Live Feed</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="bg-gray-900 text-green-400 rounded p-4 text-sm min-h-[200px] overflow-y-auto">
+                    <div className="bg-gray-900 text-green-400 rounded p-4 text-sm min-h-[200px] max-h-[400px] overflow-y-auto">
                         {liveLog.map((log, index) => (
-                            <div key={index} className="mb-1" style={{ fontFamily: 'Consolas, Monaco, "Courier New", monospace', fontFeatureSettings: "normal", }}>
+                            <div key={index} className="mb-1" style={{ fontFamily: 'Consolas, Monaco, "Courier New", monospace' }}>
                                 {log}
                             </div>
                         ))}

@@ -24,3 +24,10 @@ venv/
 
 # Excel / test data (optional)
 app/data/*.xlsx
+
+# Python Backend
+.venv/
+venv/
+__pycache__/
+*.pyc
+findify.db

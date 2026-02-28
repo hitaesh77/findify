@@ -11,35 +11,27 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@radix-ui/react-select'
 import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Search, Briefcase, BookmarkCheck, Bookmark, ExternalLink, Filter } from 'lucide-react'
+import { Briefcase, BookmarkCheck, Bookmark } from 'lucide-react'
+
+// --- CODESPACE CONFIGURATION ---
+const BACKEND_URL = "https://supreme-giggle-69rjv4vpgvrj34q7x-8000.app.github.dev"
 
 type Internship = {
   id: number
   company: string
   role: string
   saved: boolean
-  dateFound: string // ISO string
+  dateFound: string
 }
 
 export default function InternshipsPage() {
   const [internshipsList, setInternshipsList] = useState<Internship[]>([])
-  // const [searchQuery, setSearchQuery] = useState("")
-  // const [statusFilter, setStatusFilter] = useState("all")
   const [companyFilter, setCompanyFilter] = useState("all")
-  // const [typeFilter, setTypeFilter] = useState("all")
 
-  // Example: Fetch internships from API (replace with your endpoint)
   useEffect(() => {
-    fetch('http://localhost:8000/internships')
+    // FIX: Changed localhost to BACKEND_URL
+    fetch(`${BACKEND_URL}/internships`)
       .then((res) => res.json())
       .then((data) => { 
         setInternshipsList(
@@ -52,22 +44,13 @@ export default function InternshipsPage() {
           }))
         ) 
       })
-      .catch((error) => {})
+      .catch((error) => console.error("Error fetching internships:", error))
   }, [])
 
-  // Filtering logic
   const filteredInternships = internshipsList.filter((internship) => {
     const matchesCompany = companyFilter === "all" || internship.company === companyFilter
-
     return matchesCompany
   })
-
-  // Handlers for status and save
-  const updateInternshipStatus = (id: number, status: string) => {
-    setInternshipsList((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, status } : i))
-    )
-  }
 
   const toggleSaveInternship = (id: number) => {
     setInternshipsList((prev) =>
@@ -89,7 +72,6 @@ export default function InternshipsPage() {
         </div>
       </div>
 
-      {/* Internships Table */}
       <Card className="border border-gray-200">
         <CardContent className="p-0">
           <Table>
@@ -107,7 +89,8 @@ export default function InternshipsPage() {
                   <TableCell className="font-medium text-gray-900">{internship.company}</TableCell>
                   <TableCell className="text-gray-900">{internship.role}</TableCell>
                   <TableCell className="text-gray-600 text-sm">
-                    {new Date(internship.dateFound).toLocaleDateString()}
+                    {/* Added a fallback for date parsing */}
+                    {internship.dateFound ? new Date(internship.dateFound).toLocaleDateString() : 'N/A'}
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">

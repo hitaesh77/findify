@@ -2,12 +2,14 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Time
 from sqlalchemy.orm import relationship
 from .database import Base
 from datetime import datetime
+import uuid
 
 class User(Base):
     __tablename__ = "users"
 
-    user_id = Column(String, primary_key=True, index=True)
+    user_id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
     email = Column(String, unique=True, index=True)
+    hashed_password = Column(String) 
     
     companies = relationship("Company", back_populates="user")
 
