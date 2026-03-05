@@ -8,19 +8,33 @@ import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch';
-import { Search, Briefcase, BookmarkCheck, Bookmark, ExternalLink, Filter } from 'lucide-react'
 
-type Internship = {
-    id: number
-    company: string
-    role: string
-    saved: boolean
-    dateFound: string // ISO string
-}
+// --- CODESPACE CONFIGURATION ---
+const BACKEND_URL = "https://supreme-giggle-69rjv4vpgvrj34q7x-8000.app.github.dev"
 
-export default function InternshipsPage() {
+export default function NotificationsPage() {
     const [emailNotifications, setEmailNotifications] = useState(true)
     const [smsNotifications, setSmsNotifications] = useState(false)
+
+    useEffect(() => {
+        const token = localStorage.getItem("token")
+        if (!token) {
+            window.location.href = '/login'
+            return
+        }
+        fetch(`${BACKEND_URL}/companies`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then((res) => {
+            if (res.status === 401) {
+                localStorage.removeItem("token")
+                window.location.href = '/login'
+            }
+        })
+        .catch((error) => console.error('Verification error:', error))
+    }, [])
 
     return (
         <div className="max-w-4xl mx-auto p-6 space-y-8">
@@ -93,13 +107,10 @@ export default function InternshipsPage() {
                                     <br />
                                     <br />A new internship has been detected:
                                     <br />
-                                    Company: Shopify
-                                    <br />
-                                    Position: Backend Software Engineer Intern
-                                    <br />
-                                    Location: Toronto, ON
-                                    <br />
-                                    Posted: 2024-01-15 14:30:22
+                                    <br />Company: Shopify
+                                    <br />Position: Backend Software Engineer Intern
+                                    <br />Location: Toronto, ON
+                                    <br />Posted: 2024-01-15 14:30:22
                                 </div>
                             </div>
 

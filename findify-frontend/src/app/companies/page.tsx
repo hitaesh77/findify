@@ -20,15 +20,13 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose
-}
-  from '@/components/ui/dialog'
+} from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { Edit, Play, Trash2, Plus } from 'lucide-react'
+import { Edit, Trash2, Plus } from 'lucide-react'
 import { DialogTrigger } from '@radix-ui/react-dialog'
 
 // --- CODESPACE CONFIGURATION ---
-const CURRENT_USER_ID = 'admin'
 const BACKEND_URL = "https://supreme-giggle-69rjv4vpgvrj34q7x-8000.app.github.dev"
 
 type Company = {
@@ -36,7 +34,6 @@ type Company = {
   company_name: string
   career_url: string
   job_class: string
-  user_id: string
 }
 
 export default function CompaniesPage() {
@@ -49,8 +46,7 @@ export default function CompaniesPage() {
   const [formData, setFormData] = useState({
     company_name: '',
     career_url: '',
-    job_class: '',
-    user_id: CURRENT_USER_ID
+    job_class: ''
   })
 
   const handleInputChange = (field: string, value: string) => {
@@ -63,8 +59,12 @@ export default function CompaniesPage() {
   const handleDeleteCompany = async (companyId: number) => {
     setLoading(true)
     try {
+      const token = localStorage.getItem("token")
       const response = await fetch(`${BACKEND_URL}/companies/${companyId}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       })
       if (response.ok) {
         setCompanies(prev => prev.filter(c => c.id !== companyId))
@@ -84,7 +84,6 @@ export default function CompaniesPage() {
       company_name: company.company_name,
       career_url: company.career_url,
       job_class: company.job_class,
-      user_id: CURRENT_USER_ID
     })
     setOpenUpdate(true)
   }
@@ -92,10 +91,12 @@ export default function CompaniesPage() {
   const handleUpdateCompany = async (companyId: number, updatedData: Partial<Company>) => {
     setLoading(true)
     try {
+      const token = localStorage.getItem("token")
       const response = await fetch(`${BACKEND_URL}/companies/${companyId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(updatedData),
       })
@@ -127,8 +128,7 @@ export default function CompaniesPage() {
     setFormData({
       company_name: '',
       career_url: '',
-      job_class: '',
-      user_id: CURRENT_USER_ID
+      job_class: ''
     })
   }
 
@@ -137,12 +137,14 @@ export default function CompaniesPage() {
     setLoading(true)
 
     try {
+      const token = localStorage.getItem("token")
       const response = await fetch(`${BACKEND_URL}/companies`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ ...formData, user_id: CURRENT_USER_ID })
+        body: JSON.stringify(formData)
       })
 
       if (response.ok) {
@@ -158,8 +160,7 @@ export default function CompaniesPage() {
         setFormData({
           company_name: '',
           career_url: '',
-          job_class: '',
-          user_id: CURRENT_USER_ID
+          job_class: ''
         })
         setOpenAdd(false)
       } else {
@@ -173,17 +174,37 @@ export default function CompaniesPage() {
   }
 
   useEffect(() => {
-    fetch(`${BACKEND_URL}/companies?user_id=${CURRENT_USER_ID}`)
-      .then((res) => res.json())
-      .then((data) =>
-        setCompanies(
-          data.map((item: any) => ({
-            id: item.company_id,
-            company_name: item.company_name,
-            career_url: item.career_url,
-            job_class: item.job_class
-          }))
-        ))
+    const token = localStorage.getItem("token")
+    if (!token) {
+      window.location.href = '/login'
+      return
+    }
+
+    fetch(`${BACKEND_URL}/companies`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+      .then((res) => {
+        if (res.status === 401) {
+          localStorage.removeItem("token");
+          window.location.href = '/login'; 
+          throw new Error("Unauthorized: Invalid Token");
+        }
+        return res.json()
+      })
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setCompanies(
+            data.map((item: any) => ({
+              id: item.company_id,
+              company_name: item.company_name,
+              career_url: item.career_url,
+              job_class: item.job_class
+            }))
+          )
+        }
+      })
       .catch((error) => console.error('Fetch error:', error))
   }, [])
 
@@ -261,8 +282,7 @@ export default function CompaniesPage() {
             setFormData({
               company_name: '',
               career_url: '',
-              job_class: '',
-              user_id: CURRENT_USER_ID
+              job_class: ''
             })
           }
         }}>
@@ -316,35 +336,41 @@ export default function CompaniesPage() {
         </Dialog>
       </div>
 
-      <Card>
+      <Card className="h-fit overflow-hidden">
         <CardContent className="p-0">
           <Table className="table-fixed w-full">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-32 font-semibold text-gray-900">Company</TableHead>
-                <TableHead className="w-64 font-semibold text-gray-900">Career Page URL</TableHead>
-                <TableHead className="w-16 font-semibold text-gray-900">Status</TableHead>
-                <TableHead className="w-32 font-semibold text-gray-900">Job Class</TableHead>
-                <TableHead className="w-16 font-semibold text-gray-900">Actions</TableHead>
+                <TableHead className="w-32 font-semibold text-gray-900 py-3">Company</TableHead>
+                <TableHead className="w-64 font-semibold text-gray-900 py-3">Career Page URL</TableHead>
+                <TableHead className="w-24 font-semibold text-gray-900 py-3">Status</TableHead>
+                <TableHead className="w-32 font-semibold text-gray-900 py-3">Job Class</TableHead>
+                <TableHead className="w-24 font-semibold text-gray-900 py-3">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {companies.map((company) => (
                 <TableRow key={company.id ?? company.company_name}>
-                  <TableCell className="font-medium text-gray-900 break-words whitespace-normal">{company.company_name}</TableCell>
-                  <TableCell className="font-mono text-sm text-gray-600 break-words whitespace-normal">
+                  <TableCell className="font-medium text-gray-900 break-words whitespace-normal py-3">
+                    {company.company_name}
+                  </TableCell>
+                  <TableCell className="font-mono text-sm text-gray-600 break-words whitespace-normal py-3">
                     {company.career_url}
                   </TableCell>
-                  <TableCell>
-                    <Badge variant="default">Active</Badge>
+                  <TableCell className="py-3">
+                    <Badge className="bg-green-100 text-green-800 hover:bg-green-200 border-transparent shadow-none font-medium">
+                      Active
+                    </Badge>
                   </TableCell>
-                  <TableCell className="text-gray-700 break-words whitespace-normal">{company.job_class}</TableCell>
-                  <TableCell>
+                  <TableCell className="text-gray-700 break-words whitespace-normal py-3">
+                    {company.job_class}
+                  </TableCell>
+                  <TableCell className="py-3">
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => handleEditClick(company)} className="cursor-pointer">
+                      <Button variant="ghost" size="sm" onClick={() => handleEditClick(company)} className="cursor-pointer h-8 w-8 p-0">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDeleteCompany(company.id)} className="cursor-pointer">
+                      <Button variant="ghost" size="sm" onClick={() => handleDeleteCompany(company.id)} className="cursor-pointer h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>

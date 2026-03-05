@@ -1,8 +1,35 @@
+'use client'
+
+import { useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
+// --- CODESPACE CONFIGURATION ---
+const BACKEND_URL = "https://supreme-giggle-69rjv4vpgvrj34q7x-8000.app.github.dev"
+
 export default function Home() {
+
+  useEffect(() => {
+    const token = localStorage.getItem("token")
+    if (!token) {
+      window.location.href = '/login'
+      return
+    }
+    fetch(`${BACKEND_URL}/companies`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+      .then((res) => {
+        if (res.status === 401) {
+          localStorage.removeItem("token")
+          window.location.href = '/login'
+        }
+      })
+      .catch((error) => console.error('Verification error:', error))
+  }, [])
+
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">

@@ -14,7 +14,6 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Briefcase, BookmarkCheck, Bookmark } from 'lucide-react'
 
-// --- CODESPACE CONFIGURATION ---
 const BACKEND_URL = "https://supreme-giggle-69rjv4vpgvrj34q7x-8000.app.github.dev"
 
 type Internship = {
@@ -30,19 +29,37 @@ export default function InternshipsPage() {
   const [companyFilter, setCompanyFilter] = useState("all")
 
   useEffect(() => {
-    // FIX: Changed localhost to BACKEND_URL
-    fetch(`${BACKEND_URL}/internships`)
-      .then((res) => res.json())
+    const token = localStorage.getItem("token")
+    if (!token) {
+      window.location.href = '/login'
+      return
+    }
+
+    fetch(`${BACKEND_URL}/internships`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+      .then((res) => {
+        if (res.status === 401) {
+          localStorage.removeItem("token")
+          window.location.href = '/login'
+          throw new Error("Unauthorized: Invalid Token")
+        }
+        return res.json()
+      })
       .then((data) => { 
-        setInternshipsList(
-          data.map((item: any) => ({
-            id: item.internship_id,
-            company: item.company_name,
-            role: item.internship_role,
-            saved: false,
-            dateFound: item.date_found
-          }))
-        ) 
+        if (Array.isArray(data)) {
+          setInternshipsList(
+            data.map((item: any) => ({
+              id: item.internship_id,
+              company: item.company_name,
+              role: item.internship_role,
+              saved: false,
+              dateFound: item.date_found
+            }))
+          ) 
+        }
       })
       .catch((error) => console.error("Error fetching internships:", error))
   }, [])
@@ -89,7 +106,6 @@ export default function InternshipsPage() {
                   <TableCell className="font-medium text-gray-900">{internship.company}</TableCell>
                   <TableCell className="text-gray-900">{internship.role}</TableCell>
                   <TableCell className="text-gray-600 text-sm">
-                    {/* Added a fallback for date parsing */}
                     {internship.dateFound ? new Date(internship.dateFound).toLocaleDateString() : 'N/A'}
                   </TableCell>
                   <TableCell>

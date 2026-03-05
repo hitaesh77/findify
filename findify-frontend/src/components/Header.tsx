@@ -1,10 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import clsx from 'clsx'
 import { UserIcon, Cog6ToothIcon } from '@heroicons/react/16/solid'
-
 
 const tabs = [
   { name: 'Companies', href: '/companies' },
@@ -15,6 +14,13 @@ const tabs = [
 
 export default function Header() {
   const pathname = usePathname()
+  const router = useRouter()
+  if (pathname === '/login') return null;
+
+  const handleLogout = () => {
+    localStorage.removeItem("token") 
+    router.push("/login")         
+  }
 
   return (
     <header className="bg-white shadow-md border-b-2">
@@ -36,13 +42,14 @@ export default function Header() {
             </Link>
           ))}
         </nav>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2">
           <button className="p-2 rounded-full hover:bg-gray-100">
             <UserIcon className="h-6 w-6 text-gray-600" />
           </button>
           <button className="p-2 rounded-full hover:bg-gray-100">
             <Cog6ToothIcon className="h-6 w-6 text-gray-600" />
           </button>
+          <button onClick={handleLogout}className="ml-2 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 border border-red-200 rounded-md transition-colors">Logout</button>
         </div>
       </div>
     </header>

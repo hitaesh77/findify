@@ -15,8 +15,7 @@ import {
 import { Label } from '@/components/ui/label'
 import { Play } from 'lucide-react'
 
-// --- HARDCODED CODESPACE LINKS ---
-const CURRENT_USER_ID = "admin"
+// --- CODESPACE CONFIGURATION ---
 const BACKEND_HTTP_URL = "https://supreme-giggle-69rjv4vpgvrj34q7x-8000.app.github.dev"
 const BACKEND_WS_URL = "wss://supreme-giggle-69rjv4vpgvrj34q7x-8000.app.github.dev"
 
@@ -25,7 +24,6 @@ type Company = {
     company_name: string
     career_url: string
     job_class: string
-    user_id: string
 }
 
 export default function RunPage() {
@@ -39,13 +37,24 @@ export default function RunPage() {
     const handleRunScraper = async () => {
         setLoading(true)
         setScraperRunning(true)
-        setLiveLog([]) // clear previous logs
+        setLiveLog([]) 
         try {
+            const token = localStorage.getItem("token")
             const response = await fetch(`${BACKEND_HTTP_URL}/run-scraper`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify(selectedCompany)
             })
+            
+            if (response.status === 401) {
+                localStorage.removeItem("token")
+                window.location.href = '/login'
+                throw new Error("Unauthorized: Invalid Token")
+            }
+
             const data = await response.json()
             toast.success(data.message)
         } catch (error) {
@@ -58,24 +67,44 @@ export default function RunPage() {
     }
 
     useEffect(() => {
-        fetch(`${BACKEND_HTTP_URL}/companies?user_id=${CURRENT_USER_ID}`)
-            .then((res) => res.json())
-            .then((data) =>
-                setCompanies(
-                    data.map((item: any) => ({
-                        id: item.company_id,
-                        company_name: item.company_name,
-                        career_url: item.career_url,
-                        job_class: item.job_class,
-                        user_id: CURRENT_USER_ID
-                    }))
-                ))
+        const token = localStorage.getItem("token")
+        if (!token) {
+            window.location.href = '/login'
+            return
+        }
+
+        fetch(`${BACKEND_HTTP_URL}/companies`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+            .then((res) => {
+                if (res.status === 401) {
+                    localStorage.removeItem("token")
+                    window.location.href = '/login'
+                    throw new Error("Unauthorized: Invalid Token")
+                }
+                return res.json()
+            })
+            .then((data) => {
+                if (Array.isArray(data)) {
+                    setCompanies(
+                        data.map((item: any) => ({
+                            id: item.company_id,
+                            company_name: item.company_name,
+                            career_url: item.career_url,
+                            job_class: item.job_class
+                        }))
+                    )
+                }
+            })
             .catch((error) => console.error('Fetch error:', error))
     }, [])
 
     useEffect(() => {
         if (scraperRunning) {
-            // Using wss:// for secure Codespace connection
+            // NOTE: WebSockets don't easily take standard HTTP headers in the browser API.
+            // If your backend eventually requires auth for WebSockets, you usually pass it in the URL like: ?token=${token}
             wsRef.current = new WebSocket(`${BACKEND_WS_URL}/ws/scraper-log`);
             
             wsRef.current.onmessage = (event) => {
