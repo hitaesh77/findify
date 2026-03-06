@@ -100,6 +100,27 @@ def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = D
         "email": db_user.email
     }
 
+@router.get("/users/me")
+def read_users_me(current_user: User = Depends(get_current_user)):
+    return {
+        "user_id": current_user.user_id,
+        "email": current_user.email
+    }
+
+class PasswordUpdate(BaseModel):
+    new_password: str
+
+@router.put("/users/me/password")
+def update_password(payload: PasswordUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if not payload.new_password or len(payload.new_password) < 2:  # ------------- MADE 2 FOR EASY TESTING MUST CHANGE THIS ---------------------
+        raise HTTPException(status_code=400, detail="Password must be at least 2 characters long")
+        
+    hashed_password = pwd_context.hash(payload.new_password)
+    current_user.hashed_password = hashed_password
+    db.commit()
+    
+    return {"message": "Password updated successfully"}    
+
 # --------------------------------------------------------------------------------------------------------- #
 # COMPANY ROUTES #
 # --------------------------------------------------------------------------------------------------------- #
