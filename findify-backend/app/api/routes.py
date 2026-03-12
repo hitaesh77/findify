@@ -11,6 +11,8 @@ import os
 from dotenv import load_dotenv
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.security import OAuth2PasswordRequestForm
+from app.notifications.email import send_email 
+from datetime import datetime
 
 # Import your existing models, plus User
 from app.db.models import Company, Internship, ScrapeSchedule, User
@@ -279,3 +281,32 @@ def create_schedule(schedule: ScheduleIn, db: Session = Depends(get_db),current_
     db.commit()
     update_user_schedule(current_user.user_id, db)
     return new_entries
+
+# --------------------------------------------------------------------------------------------------------- #
+# NOTIFICATIONS ROUTES #
+# --------------------------------------------------------------------------------------------------------- #
+
+@router.post("/test-email")
+def test_email_notification(current_user: User = Depends(get_current_user)):
+    company_name = "Shopify"
+    role = "Backend Software Engineer Intern"
+    location = "Toronto, ON"
+    posted_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    subject = f"New internship detected — {company_name} / {role}"
+    body = f"""
+    <div style="font-family: monospace; color: #374151; font-size: 14px;">
+        A new internship has been detected:<br><br>
+        Company: {company_name}<br>
+        Position: {role}<br>
+        Location: {location}<br>
+        Posted: {posted_date}
+    </div>
+    """
+
+    success = send_email(subject=subject, body=body, to_email=current_user.email)
+    
+    if success:
+        return {"message": f"Test email sent successfully to {current_user.email}!"}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to send email. Check backend logs.")
