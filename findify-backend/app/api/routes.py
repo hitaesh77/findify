@@ -107,13 +107,19 @@ def read_users_me(current_user: User = Depends(get_current_user)):
         "email": current_user.email
     }
 
+# --- SECURITY FIX 2: Added old_password to schema ---
 class PasswordUpdate(BaseModel):
+    old_password: str
     new_password: str
 
 @router.put("/users/me/password")
 def update_password(payload: PasswordUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    if not payload.new_password or len(payload.new_password) < 2:  # ------------- MADE 2 FOR EASY TESTING MUST CHANGE THIS ---------------------
-        raise HTTPException(status_code=400, detail="Password must be at least 2 characters long")
+    # --- SECURITY FIX 2: Verify old password before changing ---
+    if not pwd_context.verify(payload.old_password, current_user.hashed_password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect current password")
+
+    if not payload.new_password or len(payload.new_password) < 2: # ---------------------------------  ADDED FOR TEST MUST CHANGE ------------------------------------------------------
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters long")
         
     hashed_password = pwd_context.hash(payload.new_password)
     current_user.hashed_password = hashed_password
@@ -234,13 +240,19 @@ async def run_scraper_task(company_name: str):
             await scraper.scrape_company(company.company_id)
 
 @router.post("/run-scraper")
-async def run_scraper(company_name: str = Body("all"),db: Session = Depends(get_db),current_user: User = Depends(get_current_user) ):
+async def run_scraper(
+    background_tasks: BackgroundTasks, # --- SECURITY FIX 3: Injected BackgroundTasks ---
+    company_name: str = Body("all"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user) 
+):
     if company_name.lower() != "all":
         company = db.query(Company).filter(Company.company_name == company_name,Company.user_id == current_user.user_id).first()
         if not company:
             return {"message": f"Company '{company_name}' not found or you don't have permission to scrape it."}
-    thread = threading.Thread(target=run_scraper_in_thread, args=(company_name,))
-    thread.start()
+            
+    # --- SECURITY FIX 3: Replaced unsafe threading with managed background task ---
+    background_tasks.add_task(run_scraper_in_thread, company_name)
     
     if company_name.lower() == "all":
         return {"message": "Scraper started for all companies"}
@@ -248,8 +260,20 @@ async def run_scraper(company_name: str = Body("all"),db: Session = Depends(get_
         return {"message": f"Scraper started for '{company_name}'"}
 
 @router.websocket("/ws/scraper-log")
-async def scraper_log_ws(websocket: WebSocket):
+async def scraper_log_ws(websocket: WebSocket, token: str): # --- SECURITY FIX 1: Require token ---
     await websocket.accept()
+    
+    # --- SECURITY FIX 1: Verify token before allowing connection to stay open ---
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id_str: str = payload.get("sub")
+        if user_id_str is None:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            return
+    except Exception:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+
     active_connections.append(websocket)
     try:
         while True:

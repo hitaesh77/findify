@@ -103,9 +103,8 @@ export default function RunPage() {
 
     useEffect(() => {
         if (scraperRunning) {
-            // NOTE: WebSockets don't easily take standard HTTP headers in the browser API.
-            // If your backend eventually requires auth for WebSockets, you usually pass it in the URL like: ?token=${token}
-            wsRef.current = new WebSocket(`${BACKEND_WS_URL}/ws/scraper-log`);
+            const token = localStorage.getItem("token");
+            wsRef.current = new WebSocket(`${BACKEND_WS_URL}/ws/scraper-log?token=${token}`);
             
             wsRef.current.onmessage = (event) => {
                 const now = new Date();

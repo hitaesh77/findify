@@ -13,6 +13,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState<{ email?: string, username?: string } | null>(null)
   const [loading, setLoading] = useState(true)
   
+  const [oldPassword, setOldPassword] = useState("") 
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [statusMsg, setStatusMsg] = useState({ text: "", type: "" })
@@ -60,8 +61,9 @@ export default function ProfilePage() {
   const handlePasswordUpdate = async () => {
     setStatusMsg({ text: "", type: "" })
     
-    if (!newPassword || !confirmPassword) {
-      setStatusMsg({ text: "Please fill in both password fields.", type: "error" })
+    // --- SECURITY FIX 2: Enforce old password requirement ---
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      setStatusMsg({ text: "Please fill in all password fields.", type: "error" })
       return
     }
     
@@ -80,7 +82,11 @@ export default function ProfilePage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ new_password: newPassword })
+        // --- SECURITY FIX 2: Send old_password to backend ---
+        body: JSON.stringify({ 
+          old_password: oldPassword, 
+          new_password: newPassword 
+        })
       })
 
       const data = await res.json()
@@ -90,6 +96,7 @@ export default function ProfilePage() {
       }
 
       setStatusMsg({ text: "Password updated successfully!", type: "success" })
+      setOldPassword("")
       setNewPassword("")
       setConfirmPassword("")
       
@@ -152,6 +159,18 @@ export default function ProfilePage() {
             <CardDescription>Update your password to keep your account secure.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            
+            <div className="space-y-2">
+              <Label htmlFor="old-password">Current Password</Label>
+              <Input 
+                id="old-password" 
+                type="password" 
+                placeholder="••••••••" 
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+              />
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="new-password">New Password</Label>
               <Input 
