@@ -3,8 +3,9 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import clsx from 'clsx'
-import { UserIcon } from '@heroicons/react/16/solid'
+import { UserIcon, Cog8ToothIcon } from '@heroicons/react/16/solid'
 
+// Added Notifications right back where it was!
 const tabs = [
   { name: 'Companies', href: '/companies' },
   { name: 'Run', href: '/run' },
@@ -20,7 +21,7 @@ export default function Header() {
 
   const handleLogout = () => {
     localStorage.removeItem("token") 
-    router.push("/login")         
+    router.push("/login")        
   }
 
   return (
@@ -46,6 +47,17 @@ export default function Header() {
           ))}
         </nav>
         <div className="flex items-center space-x-2">
+          
+          {/* Settings Gear Icon */}
+          <Link 
+            href="/settings" 
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            title="Settings"
+          >
+            <Cog8ToothIcon className="h-6 w-6 text-gray-600" />
+          </Link>
+
+          {/* Profile Icon */}
           <Link 
             href="/profile" 
             className="p-2 rounded-full hover:bg-gray-100 transition-colors"

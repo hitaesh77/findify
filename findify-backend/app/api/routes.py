@@ -12,12 +12,10 @@ from dotenv import load_dotenv
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.security import OAuth2PasswordRequestForm
 from app.notifications.email import send_email 
-from datetime import datetime
-
-# Import your existing models, plus User
-from app.db.models import Company, Internship, ScrapeSchedule, User
+from datetime import datetime, timedelta, time
+from app.db.models import Company, Internship, ScrapeSchedule, User, UserSettings
 from app.db.database import get_db
-from app.api.schemas import CompanyOut, CompanyIn, InternshipOut, ScheduleIn
+from app.api.schemas import CompanyOut, CompanyIn, InternshipOut, SettingsUpdate
 from app.scraper.scraper import InternScraper
 from app.scraper.log_ws import active_connections
 from app.scheduler.scheduler import update_user_schedule
@@ -261,52 +259,73 @@ async def scraper_log_ws(websocket: WebSocket):
             active_connections.remove(websocket)
 
 # --------------------------------------------------------------------------------------------------------- #
-# SCHEDULE ROUTES #
-# --------------------------------------------------------------------------------------------------------- #
-@router.post("/schedule")
-def create_schedule(schedule: ScheduleIn, db: Session = Depends(get_db),current_user: User = Depends(get_current_user)):
-    db.query(ScrapeSchedule).filter(ScrapeSchedule.user_id == current_user.user_id).delete()
-
-    new_entries = []
-    for day in schedule.days:
-        for time_of_day in schedule.times:
-            entry = ScrapeSchedule(
-                user_id=current_user.user_id, 
-                day_of_week=day.lower(), 
-                time_of_day=time_of_day
-            )
-            db.add(entry)
-            new_entries.append(entry)
-            
-    db.commit()
-    update_user_schedule(current_user.user_id, db)
-    return new_entries
-
-# --------------------------------------------------------------------------------------------------------- #
-# NOTIFICATIONS ROUTES #
+# SETTINGS & SCHEDULE ROUTES #
 # --------------------------------------------------------------------------------------------------------- #
 
-@router.post("/test-email")
-def test_email_notification(current_user: User = Depends(get_current_user)):
-    company_name = "Shopify"
-    role = "Backend Software Engineer Intern"
-    location = "Toronto, ON"
-    posted_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-    subject = f"New internship detected — {company_name} / {role}"
-    body = f"""
-    <div style="font-family: monospace; color: #374151; font-size: 14px;">
-        A new internship has been detected:<br><br>
-        Company: {company_name}<br>
-        Position: {role}<br>
-        Location: {location}<br>
-        Posted: {posted_date}
-    </div>
-    """
-
-    success = send_email(subject=subject, body=body, to_email=current_user.email)
+@router.get("/settings", response_model=SettingsUpdate)
+def get_settings(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # 1. Get Notification Settings
+    settings = db.query(UserSettings).filter(UserSettings.user_id == current_user.user_id).first()
     
-    if success:
-        return {"message": f"Test email sent successfully to {current_user.email}!"}
+    # 2. Get Schedules
+    schedules = db.query(ScrapeSchedule).filter(ScrapeSchedule.user_id == current_user.user_id).all()
+    
+    # 3. Format the response for the React frontend
+    run_days = [schedule.day_of_week for schedule in schedules]
+    
+    # Extract time from the first schedule (if they exist)
+    run_hour = "09"
+    run_minute = "00"
+    if schedules and schedules[0].time_of_day:
+        run_hour = schedules[0].time_of_day.strftime("%H")
+        run_minute = schedules[0].time_of_day.strftime("%M")
+
+    return {
+        "email_alerts_enabled": settings.email_alerts_enabled if settings else False,
+        "whatsapp_alerts_enabled": settings.whatsapp_alerts_enabled if settings else False,
+        "phone_number": settings.phone_number if settings else "",
+        "run_days": run_days if run_days else ["monday", "wednesday"],
+        "run_hour": run_hour,
+        "run_minute": run_minute
+    }
+
+@router.post("/settings")
+def update_settings(payload: SettingsUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # 1. Update or Create UserSettings (Notifications)
+    settings = db.query(UserSettings).filter(UserSettings.user_id == current_user.user_id).first()
+    
+    if not settings:
+        settings = UserSettings(
+            user_id=current_user.user_id,
+            email_alerts_enabled=payload.email_alerts_enabled,
+            whatsapp_alerts_enabled=payload.whatsapp_alerts_enabled,
+            phone_number=payload.phone_number
+        )
+        db.add(settings)
     else:
-        raise HTTPException(status_code=500, detail="Failed to send email. Check backend logs.")
+        settings.email_alerts_enabled = payload.email_alerts_enabled
+        settings.whatsapp_alerts_enabled = payload.whatsapp_alerts_enabled
+        settings.phone_number = payload.phone_number
+
+    # 2. Update Schedules (Delete old ones, create new ones)
+    db.query(ScrapeSchedule).filter(ScrapeSchedule.user_id == current_user.user_id).delete()
+    
+    # Convert string hour/minute to Python datetime.time object
+    schedule_time = time(int(payload.run_hour), int(payload.run_minute))
+    
+    for day in payload.run_days:
+        formatted_day = day.lower()[:3] 
+        
+        new_schedule = ScrapeSchedule(
+            user_id=current_user.user_id,
+            day_of_week=formatted_day,
+            time_of_day=schedule_time
+        )
+        db.add(new_schedule)
+        
+    db.commit()
+    
+    # 3. Ping your scheduler so it instantly knows about the new times!
+    update_user_schedule(current_user.user_id, db)
+    
+    return {"status": "success"}

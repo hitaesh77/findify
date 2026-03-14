@@ -1,5 +1,6 @@
 import sys
 import asyncio
+from contextlib import asynccontextmanager
 
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
@@ -7,29 +8,32 @@ if sys.platform == "win32":
 from fastapi import FastAPI
 from app.api.routes import router
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
-# from app.scheduler.scheduler import start_scheduler, test_scheduler, shutdown_scheduler
 
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     test_scheduler()
-#     yield
-#     shutdown_scheduler()
+# --- 1. IMPORT YOUR INIT FUNCTION ---
+from init_db import init 
 
+# --- 2. SET UP THE LIFESPAN TO RUN ON STARTUP ---
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("--- FastAPI Startup: Initializing Database ---")
+    init()  # This runs your init_db.py logic!
+    # test_scheduler() # (You can uncomment this later when you need it!)
+    yield
+    print("--- FastAPI Shutdown ---")
+    # shutdown_scheduler()
 
-# app = FastAPI(lifespan=lifespan)
+# --- 3. PASS THE LIFESPAN TO YOUR APP ---
+app = FastAPI(lifespan=lifespan)
 
-app = FastAPI()
-
-app.include_router(router)
-
+# 1. ADD MIDDLEWARE FIRST
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Or specify your frontend URL
-    allow_credentials=True,
+    allow_origins=["*"],  
+    allow_credentials=False,  
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(router)
 
 @app.get("/")
 def read_root():

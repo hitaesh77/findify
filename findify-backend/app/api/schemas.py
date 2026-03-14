@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime, time
+from typing import Optional, List
 
 class CompanyOut(BaseModel):
     company_id: int
@@ -9,7 +10,6 @@ class CompanyOut(BaseModel):
     user_id: str
 
     class Config:
-        # orm_mode = True
         from_attributes = True
 
 class CompanyIn(BaseModel):
@@ -18,7 +18,6 @@ class CompanyIn(BaseModel):
     job_class: str
 
     class Config:
-        # orm_mode = True
         from_attributes = True
 
 class InternshipOut(BaseModel):
@@ -34,6 +33,32 @@ class ScheduleIn(BaseModel):
     user_id: str
     days: list[str]
     times: list[time]
+
+    class Config:
+        from_attributes = True
+
+class ScheduleOut(BaseModel):
+    schedule_id: int
+    day_of_week: str
+    time_of_day: time
+
+    class Config:
+        from_attributes = True
+
+class SettingsUpdate(BaseModel):
+    email_alerts_enabled: bool
+    whatsapp_alerts_enabled: bool
+    phone_number: Optional[str] = None
+    run_days: List[str]
+    run_hour: str
+    run_minute: str
+
+class SettingsOut(BaseModel):
+    setting_id: int
+    user_id: str
+    email_alerts_enabled: bool
+    whatsapp_alerts_enabled: bool
+    phone_number: Optional[str] = None
 
     class Config:
         from_attributes = True

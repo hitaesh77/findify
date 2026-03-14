@@ -23,7 +23,7 @@ def init():
             
             session.add_all([
                 User(email="hitaesh777@gmail.com", hashed_password=hashed),
-                User(email="findify_user@gmail.com", hashed_password=hashed)
+                User(email="user@gmail.com", hashed_password=hashed)
             ])
             session.commit()
             print(" Dev users added!")
