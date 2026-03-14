@@ -10,7 +10,6 @@ const tabs = [
   { name: 'Companies', href: '/companies' },
   { name: 'Run', href: '/run' },
   { name: 'Internships', href: '/internships' },
-  { name: 'Notifications', href: '/notifications' },
 ]
 
 export default function Header() {

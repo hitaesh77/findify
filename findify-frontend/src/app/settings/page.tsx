@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, Calendar, Mail, Clock, Save, CheckCircle2, ChevronUp, ChevronDown, Phone, MessageCircle, AlertCircle } from "lucide-react";
+import { Bell, Calendar, Mail, Clock, Save, CheckCircle2, ChevronUp, ChevronDown, Phone, MessageCircle, AlertCircle, Send } from "lucide-react";
 
 const daysOfWeek = [
   { id: "mon", label: "Mon" },
@@ -16,6 +16,7 @@ const daysOfWeek = [
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("notifications");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
+  const [testStatus, setTestStatus] = useState<"idle" | "testing" | "success" | "error">("idle");
   
   // Notification State
   const [notifications, setNotifications] = useState({
@@ -148,7 +149,7 @@ export default function SettingsPage() {
     }
   };
 
-  // --- WHATSAPP FORMATTING & VALIDATION ---
+  // --- WHATSAPP FORMATTING & VALIDATION (RESTORED) ---
   const formatPhoneNumber = (val: string) => {
     if (!val) return "";
 
@@ -249,7 +250,8 @@ export default function SettingsPage() {
     validatePhone();
   };
 
-const handleSave = async () => {
+  // --- ACTIONS ---
+  const handleSave = async () => {
     if (notifications.whatsapp_alerts_enabled && !validatePhone()) {
       setActiveTab("notifications"); 
       setSaveStatus("error");
@@ -296,9 +298,31 @@ const handleSave = async () => {
     }
   };
 
+  const handleTestNotification = async () => {
+    if (notifications.whatsapp_alerts_enabled && !validatePhone()) {
+      return;
+    }
+    
+    setTestStatus("testing");
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("https://supreme-giggle-69rjv4vpgvrj34q7x-8000.app.github.dev/test-notification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify(notifications),
+      });
+      if (!response.ok) throw new Error("Failed to send test");
+      setTestStatus("success");
+    } catch (error) {
+      setTestStatus("error");
+    } finally {
+      setTimeout(() => setTestStatus("idle"), 3000);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white text-black font-sans pb-20">
-      <div className="max-w-4xl mx-auto pt-16 px-6">
+      <div className="max-w-5xl mx-auto pt-16 px-6">
         
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-gray-100 pb-8 mb-12 gap-4">
@@ -322,11 +346,13 @@ const handleSave = async () => {
             <button onClick={() => setActiveTab("scheduler")} className={`w-full text-left px-4 py-3 rounded-lg text-sm font-semibold transition-all ${activeTab === "scheduler" ? "bg-gray-100 border-l-4 border-black text-black" : "text-gray-400 hover:text-black"}`}>Scheduler</button>
           </div>
 
-          <div className="md:col-span-3 space-y-12">
+          <div className="md:col-span-3">
             
-            {/* NOTIFICATIONS */}
+            {/* NOTIFICATIONS TAB */}
             {activeTab === "notifications" && (
-              <div className="space-y-10 animate-in fade-in duration-500">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 animate-in fade-in duration-500">
+                
+                {/* CONFIGURATION COLUMN */}
                 <section className="space-y-6">
                   <h2 className="text-xl font-semibold flex items-center gap-2">
                     <Bell size={20}/> Alert Relay
@@ -337,8 +363,8 @@ const handleSave = async () => {
                     <div className="flex items-center gap-4">
                       <div className={`p-2 rounded-lg ${notifications.email_alerts_enabled ? "bg-black text-white" : "bg-gray-100 text-gray-400"}`}><Mail size={20}/></div>
                       <div>
-                        <p className="font-bold text-sm">Email Notifications</p>
-                        <p className="text-xs text-gray-500 font-medium">Daily summary of matches found</p>
+                        <p className="font-bold text-sm">Email Alerts</p>
+                        <p className="text-xs text-gray-500 font-medium">Sent to your account email</p>
                       </div>
                     </div>
                     <div className={`w-10 h-5 rounded-full relative transition-colors ${notifications.email_alerts_enabled ? "bg-black" : "bg-gray-200"}`}>
@@ -356,7 +382,7 @@ const handleSave = async () => {
                       <div className={`p-2 rounded-lg transition-colors ${notifications.whatsapp_alerts_enabled ? "bg-[#25D366] text-white" : "bg-gray-100 text-gray-400"}`}><MessageCircle size={20}/></div>
                       <div>
                         <p className="font-bold text-sm">WhatsApp Alerts</p>
-                        <p className="text-xs text-gray-500 font-medium">Instant messages for high-priority items</p>
+                        <p className="text-xs text-gray-500 font-medium">Instant messages for priority items</p>
                       </div>
                     </div>
                     <div className={`w-10 h-5 rounded-full relative transition-colors ${notifications.whatsapp_alerts_enabled ? "bg-[#25D366]" : "bg-gray-200"}`}>
@@ -396,11 +422,64 @@ const handleSave = async () => {
                       )}
                     </div>
                   )}
+
+                  {/* Test Button */}
+                  <div className="pt-4 border-t border-gray-100">
+                    <button 
+                      onClick={handleTestNotification}
+                      disabled={(!notifications.email_alerts_enabled && !notifications.whatsapp_alerts_enabled) || testStatus === "testing"}
+                      className={`w-full py-3 rounded-lg border font-semibold flex items-center justify-center gap-2 transition-all ${
+                        (!notifications.email_alerts_enabled && !notifications.whatsapp_alerts_enabled) ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed" : 
+                        testStatus === "success" ? "bg-green-50 text-green-600 border-green-200" :
+                        testStatus === "error" ? "bg-red-50 text-red-600 border-red-200" :
+                        "bg-white text-black border-gray-200 hover:border-black active:scale-[0.98]"
+                      }`}
+                    >
+                      {testStatus === "testing" ? "Sending..." : testStatus === "success" ? "Test Sent!" : testStatus === "error" ? "Send Failed" : <><Send size={16}/> Send Test Notification</>}
+                    </button>
+                  </div>
                 </section>
+
+                {/* PREVIEW COLUMN */}
+                <section className="space-y-6">
+                  <h2 className="text-xl font-semibold flex items-center gap-2 text-gray-400">
+                    Message Preview
+                  </h2>
+                  
+                  <div className="space-y-6">
+                    {/* Email Preview */}
+                    <div className={`p-6 border rounded-xl transition-all ${notifications.email_alerts_enabled ? "bg-white border-gray-200 shadow-sm" : "bg-gray-50 border-gray-100 opacity-50 grayscale"}`}>
+                      <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">Email Format</h3>
+                      <div className="space-y-3 text-sm">
+                        <p><span className="text-gray-400">Subject:</span> <strong className="font-medium">New internship detected — Shopify / Backend Intern</strong></p>
+                        <hr className="border-gray-100" />
+                        <p className="text-gray-600">A new internship has been detected:</p>
+                        <div className="bg-gray-50 p-3 rounded-md font-mono text-xs text-gray-600 space-y-1">
+                          <p>Company: Shopify</p>
+                          <p>Position: Backend Software Engineer Intern</p>
+                          <p>Location: Toronto, ON</p>
+                          <p>Posted: 2026-03-14 14:30:22</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* WhatsApp Preview */}
+                    <div className={`p-6 border rounded-xl transition-all ${notifications.whatsapp_alerts_enabled ? "bg-white border-[#25D366]/30 shadow-sm" : "bg-gray-50 border-gray-100 opacity-50 grayscale"}`}>
+                      <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">WhatsApp Format</h3>
+                      <div className="bg-[#E7FFDB] p-4 rounded-xl rounded-tl-sm relative w-5/6 shadow-sm border border-[#D1F4C9]">
+                        <p className="text-sm text-gray-800 leading-relaxed">
+                          *Findify:* New internship at Shopify - Backend Software Engineer Intern. View details in dashboard.
+                        </p>
+                        <span className="text-[10px] text-gray-400 absolute bottom-2 right-3">12:00 PM</span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
               </div>
             )}
 
-            {/* SCHEDULER */}
+            {/* SCHEDULER TAB (Unchanged) */}
             {activeTab === "scheduler" && (
               <div className="space-y-16 animate-in fade-in duration-500">
                 <section>
