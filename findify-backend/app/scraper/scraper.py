@@ -1,6 +1,7 @@
 import pandas as pd
 import asyncio
 from playwright.async_api import async_playwright
+import re # <-- Added regex import
 
 from app.db.models import Company, Internship
 from app.db.database import SessionLocal
@@ -93,28 +94,13 @@ class InternScraper:
         await log_and_send(f"Searching for student jobs at {company.company_name}...")
 
         scraped_set = set()
+        pattern_string = r'\b(' + '|'.join(re.escape(k) for k in STUDENT_KEYWORDS) + r')\b'
+        student_regex = re.compile(pattern_string, re.IGNORECASE)
 
         for title in job_titles:
-            for keyword in STUDENT_KEYWORDS:
-                if keyword in title.lower():
-                    # existing = self.db.query(Internship).filter_by(
-                    #     internship_role=title,
-                    #     company_id=company.company_id
-                    # ).first()
-
-                    # if not existing:
-                    #     new_internship = Internship(
-                    #         internship_role = title,
-                    #         company_id = company.company_id
-                    #     )
-                        # self.db.add(new_internship)
-                    scraped_set.add(title)
-                    await log_and_send(f"Found internship: {title} at {company.company_name}")
-                    
-                    # else:
-                    #     # print(f"Internship {title} already exists for {company.company_name}")  
-                    #     await log_and_send(f"Internship {title} already exists for {company.company_name}")
-                    break
+            if student_regex.search(title):
+                scraped_set.add(title)
+                await log_and_send(f"Found internship: {title} at {company.company_name}")
         
         db_set = self.db.query(Internship.internship_role).filter_by(company_id=company.company_id).all()
         db_set = {internship.internship_role for internship in db_set}
@@ -220,7 +206,7 @@ class InternScraper:
                 await log_and_send("No internship changes found.")
                 send_email(
                     subject="No Internship Changes Found",
-                    body="No new or removed internships were found during the scrape for {company.company_name}.",
+                    body=f"No new or removed internships were found during the scrape for {company.company_name}.",
                     to_email=os.getenv("TEST_EMAIL")
                 )
 
