@@ -353,3 +353,48 @@ def update_settings(payload: SettingsUpdate, db: Session = Depends(get_db), curr
     update_user_schedule(current_user.user_id, db)
     
     return {"status": "success"}
+
+class TestNotificationPayload(BaseModel):
+    email_alerts_enabled: bool
+    whatsapp_alerts_enabled: bool
+    phone_number: str | None = None
+
+@router.post("/test-notification")
+def trigger_test_email(payload: TestNotificationPayload, current_user: User = Depends(get_current_user)):
+    target_email = current_user.email 
+    subject = "New internship detected — Shopify / Backend Intern"
+    
+    body = """
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #111827;">
+        <p style="color: #4b5563; font-size: 14px;">A new internship has been detected:</p>
+        
+        <div style="background-color: #f9fafb; padding: 16px; border-radius: 8px; font-family: monospace; font-size: 13px; color: #4b5563; border: 1px solid #f3f4f6;">
+            <p style="margin: 4px 0;"><strong>Company:</strong> Shopify</p>
+            <p style="margin: 4px 0;"><strong>Position:</strong> Backend Software Engineer Intern</p>
+            <p style="margin: 4px 0;"><strong>Location:</strong> Toronto, ON</p>
+            <p style="margin: 4px 0;"><strong>Posted:</strong> 2026-03-14 14:30:22</p>
+        </div>
+        
+        <p style="font-size: 11px; color: #9ca3af; margin-top: 24px; text-transform: uppercase; letter-spacing: 0.05em;">
+            ⚙️ Findify Bot • Test Notification
+        </p>
+    </div>
+    """
+    
+    success = True
+    if payload.email_alerts_enabled:
+        success = send_email(
+            subject=subject,
+            body=body,
+            to_email=target_email
+        )
+        
+    # LLATER ADD PHONE AS WELL -----------------------------
+
+    if success:
+        return {"status": "success", "message": "Test notification sent!"}
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail="Failed to send email. Check backend logs."
+        )
