@@ -54,7 +54,8 @@ class InternScraper:
     
     # Function to scrape all job listings from a given career URL and job class
     async def get_all_jobs(self, company):
-        job_titles = []
+        job_titles = set()
+        max_attempts = 10 
         
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True)
@@ -66,29 +67,57 @@ class InternScraper:
                     job_selector = f".{company.job_class.replace(' ', '.')}"
 
                     try:
-                        await page.wait_for_selector(job_selector, timeout=20000)
+                        await page.wait_for_selector(job_selector, timeout=15000)
                     except Exception as e:
                         print(f"Timeout waiting for elements with class '{company.job_class}' to load: {e}")
-                        return job_titles
+                        return list(job_titles)
+
+                    for attempt in range(max_attempts):
+                        html_content = await page.content()
+                        soup = BeautifulSoup(html_content, 'html.parser')
+                        job_listings = soup.find_all(class_=company.job_class)
+                        
+                        current_job_count = len(job_titles)
                     
-                    html_content = await page.content()
-                    soup = BeautifulSoup(html_content, 'html.parser')
-                    job_listings = soup.find_all(class_=company.job_class)
-                    
-                    # Extract job titles
-                    job_titles = [job.text.strip().lower() for job in job_listings]
-                    
-                    # Debug output
-                    with open('debug_output.txt', 'w', encoding='utf-8') as f:
-                        for title in job_titles:
-                            f.write(f"{title}\n")
+                        for job in job_listings:
+                            job_titles.add(job.text.strip().lower())
                             
+                        if len(job_titles) == current_job_count and attempt > 0:
+                            await log_and_send(f"Reached the end of the list for {company.company_name}. Total: {len(job_titles)}")
+                            break
+
+                        await log_and_send(f"Page/Scroll {attempt + 1} for {company.company_name}: Found {len(job_titles)} unique jobs so far...")
+
+                        await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                        await page.wait_for_timeout(2000) 
+                        
+                        next_button_selectors = [
+                            "button:has-text('Load more')",
+                            "button:has-text('Load More')",
+                            "button:has-text('View more')",
+                            "a:has-text('Next')",
+                            "button:has-text('Next')",
+                            ".pagination-next",
+                            "[aria-label='Next']"
+                        ]
+
+                        clicked = False
+                        for selector in next_button_selectors:
+                            try:
+                                button = page.locator(selector).first
+                                if await button.is_visible() and await button.is_enabled():
+                                    await button.click()
+                                    await page.wait_for_timeout(3000)
+                                    clicked = True
+                                    break 
+                            except Exception:
+                                continue
             except Exception as e:
                 print(f"Error scraping {company.company_name}: {e}")
             finally:
                 await browser.close()
         
-        return job_titles
+        return list(job_titles)
     
     async def search_student_jobs(self, job_titles, company):
         await log_and_send(f"Searching for student jobs at {company.company_name}...")
