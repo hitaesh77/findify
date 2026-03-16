@@ -1,15 +1,11 @@
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from app.db.models import ScrapeSchedule
 from app.db.database import SessionLocal
 from app.scraper.scraper import InternScraper
-import asyncio
 from pytz import utc
-import time
 
-# scheduler = BackgroundScheduler(timezone=utc)
+# 1. Kept as UTC for now!
 scheduler = AsyncIOScheduler(timezone=utc)
 
 async def run_scheduled_scrape(user_id: str):
@@ -17,25 +13,44 @@ async def run_scheduled_scrape(user_id: str):
     await scraper.initialize()
     await scraper.scrape_internships(user_id)
 
-def schedule_scrape_job(user_id: str, day_of_week: str, hour: int, minute: int, job_id: str):
-    trigger = CronTrigger(day_of_week=day_of_week, hour=hour, minute=minute)
-    # Remove job if it exists
-    existing_job = scheduler.get_job(job_id)
-    if existing_job:
-        scheduler.remove_job(job_id)
-    # Add job: note func is async, apscheduler supports that with AsyncIOScheduler
-    scheduler.add_job(run_scheduled_scrape, trigger, args=[user_id], id=job_id, replace_existing=True)
-
 def update_user_schedule(user_id: str, db: SessionLocal):
-    # Remove all jobs for user
-    for job in scheduler.get_jobs():
-        if job.id.startswith(f"{user_id}_"):
-            scheduler.remove_job(job.id)
+    job_id = f"scrape_job_{user_id}"
+    
+    # 1. Remove existing job for this user to start fresh
+    if scheduler.get_job(job_id):
+        scheduler.remove_job(job_id)
 
     schedules = db.query(ScrapeSchedule).filter(ScrapeSchedule.user_id == user_id).all()
-    for i, sched in enumerate(schedules):
-        job_id = f"{user_id}_{i}"
-        schedule_scrape_job(user_id, sched.day_of_week, sched.time_of_day.hour, sched.time_of_day.minute, job_id)
+    
+    # 2. Handle the Empty State (User deselected all days)
+    if not schedules:
+        print(f"Scheduler paused for {user_id}: No active run days.")
+        return
+
+    # 3. Combine multiple DB rows into a SINGLE cron string
+    # e.g., ["mon", "wed", "fri"] -> "mon,wed,fri"
+    run_days = [sched.day_of_week for sched in schedules]
+    cron_days = ",".join(run_days)  
+    
+    schedule_time = schedules[0].time_of_day
+
+    # 4. Create the unified trigger using UTC
+    trigger = CronTrigger(
+        day_of_week=cron_days,
+        hour=schedule_time.hour,
+        minute=schedule_time.minute,
+        timezone=utc
+    )
+    
+    # 5. Add the single job
+    scheduler.add_job(
+        run_scheduled_scrape, 
+        trigger=trigger, 
+        args=[user_id], 
+        id=job_id, 
+        replace_existing=True
+    )
+    print(f"Scheduled scraping for {user_id} on days: {cron_days} at {schedule_time.strftime('%H:%M')} UTC")
 
 def start_scheduler():
     if not scheduler.running:
@@ -51,8 +66,7 @@ def shutdown_scheduler():
     if scheduler.running:
         scheduler.shutdown()
 
-
-# TESTING 
+# --- TESTING LOGIC ---
 import datetime
 
 async def test_job(user_id: str):
@@ -65,19 +79,16 @@ def test_scheduler_interval():
     if not scheduler.running:
         scheduler.start()
     
-    # Remove old test jobs if any
-    for job in scheduler.get_jobs():
-        if job.id.startswith(f"{test_user_id}_"):
-            scheduler.remove_job(job.id)
+    job_id = f"{test_user_id}_interval_job"
+    if scheduler.get_job(job_id):
+        scheduler.remove_job(job_id)
     
-    # Add job every 30 seconds
     scheduler.add_job(
-        run_scheduled_scrape,
+        run_scheduled_scrape, 
         'interval',
         seconds=30,
         args=[test_user_id],
-        id=f"{test_user_id}_interval_job",
+        id=job_id,
         replace_existing=True
     )
-    
     print(f"Scheduled test job for user '{test_user_id}' every 30 seconds.")

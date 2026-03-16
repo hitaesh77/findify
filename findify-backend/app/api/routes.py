@@ -15,7 +15,7 @@ from app.notifications.email import send_email
 from datetime import datetime, timedelta, time
 from app.db.models import Company, Internship, ScrapeSchedule, User, UserSettings
 from app.db.database import get_db
-from app.api.schemas import CompanyOut, CompanyIn, InternshipOut, SettingsUpdate
+from app.api.schemas import CompanyOut, CompanyIn, InternshipOut, SettingsUpdate, TestNotificationPayload
 from app.scraper.scraper import InternScraper
 from app.scraper.log_ws import active_connections
 from app.scheduler.scheduler import update_user_schedule
@@ -353,11 +353,6 @@ def update_settings(payload: SettingsUpdate, db: Session = Depends(get_db), curr
     update_user_schedule(current_user.user_id, db)
     
     return {"status": "success"}
-
-class TestNotificationPayload(BaseModel):
-    email_alerts_enabled: bool
-    whatsapp_alerts_enabled: bool
-    phone_number: str | None = None
 
 @router.post("/test-notification")
 def trigger_test_email(payload: TestNotificationPayload, current_user: User = Depends(get_current_user)):

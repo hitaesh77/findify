@@ -62,3 +62,8 @@ class SettingsOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class TestNotificationPayload(BaseModel):
+    email_alerts_enabled: bool
+    whatsapp_alerts_enabled: bool
+    phone_number: str | None = None

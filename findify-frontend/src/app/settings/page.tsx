@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, Calendar, Mail, Clock, Save, CheckCircle2, ChevronUp, ChevronDown, Phone, MessageCircle, AlertCircle, Send } from "lucide-react";
+import { Bell, Calendar, Mail, Clock, Save, CheckCircle2, ChevronUp, ChevronDown, Phone, MessageCircle, AlertCircle, Send, RefreshCcw } from "lucide-react";
 
 const daysOfWeek = [
   { id: "mon", label: "Mon" },
@@ -17,6 +17,8 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("notifications");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
   const [testStatus, setTestStatus] = useState<"idle" | "testing" | "success" | "error">("idle");
+  const [fetchStatus, setFetchStatus] = useState<"loading" | "idle" | "error">("loading");
+  const [daysError, setDaysError] = useState(false);
   
   // Notification State
   const [notifications, setNotifications] = useState({
@@ -37,46 +39,51 @@ export default function SettingsPage() {
   const [minRotation, setMinRotation] = useState(0);    
 
   // FETCH SETTINGS ON LOAD
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const response = await fetch("https://supreme-giggle-69rjv4vpgvrj34q7x-8000.app.github.dev/settings", {
-          headers: { "Authorization": `Bearer ${token}` },
+  const fetchSettings = async () => {
+    setFetchStatus("loading");
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("https://supreme-giggle-69rjv4vpgvrj34q7x-8000.app.github.dev/settings", {
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        setNotifications({
+          email_alerts_enabled: data.email_alerts_enabled,
+          whatsapp_alerts_enabled: data.whatsapp_alerts_enabled,
+          phone_number: data.phone_number || "",
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          
-          setNotifications({
-            email_alerts_enabled: data.email_alerts_enabled,
-            whatsapp_alerts_enabled: data.whatsapp_alerts_enabled,
-            phone_number: data.phone_number || "",
-          });
+        if (data.run_days) setSelectedDays(data.run_days);
 
-          if (data.run_days) setSelectedDays(data.run_days);
+        if (data.run_hour !== undefined && data.run_minute !== undefined) {
+          let bHour = parseInt(data.run_hour, 10);
+          const bMin = parseInt(data.run_minute, 10);
+          const p = bHour >= 12 ? "PM" : "AM";
+          let displayHour = bHour % 12;
+          if (displayHour === 0) displayHour = 12;
 
-          if (data.run_hour !== undefined && data.run_minute !== undefined) {
-            let bHour = parseInt(data.run_hour, 10);
-            const bMin = parseInt(data.run_minute, 10);
-            const p = bHour >= 12 ? "PM" : "AM";
-            let displayHour = bHour % 12;
-            if (displayHour === 0) displayHour = 12;
+          setHour(String(displayHour).padStart(2, "0"));
+          setMinute(String(bMin).padStart(2, "0"));
+          setPeriod(p);
 
-            setHour(String(displayHour).padStart(2, "0"));
-            setMinute(String(bMin).padStart(2, "0"));
-            setPeriod(p);
-
-            // Set absolute initial rotations to prevent the Strict Mode double-spin bug
-            setHourRotation((displayHour % 12) * 30);
-            setMinRotation((Math.round(bMin / 5) * 5 % 60) * 6);
-          }
+          // Set absolute initial rotations to prevent the Strict Mode double-spin bug
+          setHourRotation((displayHour % 12) * 30);
+          setMinRotation((Math.round(bMin / 5) * 5 % 60) * 6);
         }
-      } catch (error) {
-        console.error("Error loading settings:", error);
+        setFetchStatus("idle");
+      } else {
+        setFetchStatus("error");
       }
-    };
+    } catch (error) {
+      console.error("Error loading settings:", error);
+      setFetchStatus("error");
+    }
+  };
 
+  useEffect(() => {
     fetchSettings();
   }, []);
 
@@ -252,6 +259,15 @@ export default function SettingsPage() {
 
   // --- ACTIONS ---
   const handleSave = async () => {
+    if (selectedDays.length === 0) {
+      setDaysError(true);
+      setActiveTab("scheduler");
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+      return;
+    }
+    setDaysError(false);
+
     if (notifications.whatsapp_alerts_enabled && !validatePhone()) {
       setActiveTab("notifications"); 
       setSaveStatus("error");
@@ -324,6 +340,19 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-white text-black font-sans pb-20">
       <div className="max-w-5xl mx-auto pt-16 px-6">
         
+        {/* FAILSAFE ERROR BANNER */}
+        {fetchStatus === "error" && (
+          <div className="mb-8 p-4 bg-red-50 border border-red-100 rounded-xl flex items-center justify-between animate-in slide-in-from-top duration-500">
+            <div className="flex items-center gap-3 text-red-600">
+              <AlertCircle size={20} />
+              <p className="text-sm font-medium">Failed to connect to the server. Settings shown may be outdated.</p>
+            </div>
+            <button onClick={fetchSettings} className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-red-600 hover:underline">
+              <RefreshCcw size={14} /> Retry
+            </button>
+          </div>
+        )}
+
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-gray-100 pb-8 mb-12 gap-4">
           <div>
@@ -332,7 +361,8 @@ export default function SettingsPage() {
           </div>
           <button 
             onClick={handleSave} 
-            className={`px-8 py-3 rounded-md transition-all flex items-center gap-2 font-medium active:scale-95 text-white ${saveStatus === "error" ? "bg-red-500 hover:bg-red-600" : "bg-black hover:bg-gray-800"}`}
+            disabled={fetchStatus === "loading"}
+            className={`px-8 py-3 rounded-md transition-all flex items-center gap-2 font-medium active:scale-95 text-white ${saveStatus === "error" ? "bg-red-500 hover:bg-red-600" : "bg-black hover:bg-gray-800 disabled:bg-gray-200"}`}
           >
             {saveStatus === "success" ? <CheckCircle2 size={18} /> : saveStatus === "error" ? <AlertCircle size={18} /> : <Save size={18} />}
             {saveStatus === "saving" ? "Saving..." : saveStatus === "success" ? "Changes Saved" : saveStatus === "error" ? "Fix Errors" : "Apply Settings"}
@@ -479,19 +509,30 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* SCHEDULER TAB (Unchanged) */}
+            {/* SCHEDULER TAB */}
             {activeTab === "scheduler" && (
               <div className="space-y-16 animate-in fade-in duration-500">
                 <section>
                   <h2 className="text-xl font-semibold mb-6 flex items-center gap-2"><Calendar size={20}/> Run Days</h2>
-                  <div className="flex flex-wrap gap-3">
+                  <div className={`flex flex-wrap gap-3 p-4 rounded-xl border-2 transition-colors ${daysError ? "border-red-200 bg-red-50" : "border-transparent"}`}>
                     {daysOfWeek.map((day) => (
-                      <button key={day.id} onClick={() => setSelectedDays(prev => prev.includes(day.id) ? prev.filter(d => d !== day.id) : [...prev, day.id])}
+                      <button key={day.id} onClick={() => {
+                        setSelectedDays(prev => {
+                          const next = prev.includes(day.id) ? prev.filter(d => d !== day.id) : [...prev, day.id];
+                          if (next.length > 0) setDaysError(false);
+                          return next;
+                        });
+                      }}
                         className={`px-5 py-3 rounded-xl border-2 font-bold text-sm transition-all ${selectedDays.includes(day.id) ? "border-black bg-black text-white" : "border-gray-100 text-gray-400 hover:border-gray-300"}`}>
                         {day.label}
                       </button>
                     ))}
                   </div>
+                  {daysError && (
+                    <p className="text-xs text-red-500 font-medium mt-3 flex items-center gap-1 animate-in fade-in">
+                      <AlertCircle size={12} /> Please select at least one day.
+                    </p>
+                  )}
                 </section>
 
                 <section>
