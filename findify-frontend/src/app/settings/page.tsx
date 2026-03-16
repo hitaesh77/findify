@@ -603,7 +603,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   
-                  <p className="text-[10px] text-gray-400 mt-8 uppercase tracking-[0.2em] font-bold">Target Execution: {hour || "09"}:{minute || "00"} {period} EST</p>
+                  <p className="text-[10px] text-gray-400 mt-8 uppercase tracking-[0.2em] font-bold">Target Execution: {hour || "09"}:{minute || "00"} {period} UTC</p>
                 </section>
               </div>
             )}
